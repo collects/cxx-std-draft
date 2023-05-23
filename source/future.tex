@@ -2,19 +2,117 @@
 \normannex{depr}{Compatibility features}
 
 \pnum
-This Clause describes features of the \Cpp Standard that are specified for compatibility with
+This Clause describes features of the \Cpp{} Standard that are specified for compatibility with
 existing implementations.
 
 \pnum
 These are deprecated features, where
 \term{deprecated}
 is defined as:
-Normative for the current edition of the Standard,
+Normative for the current edition of this International Standard,
 but having been identified as a candidate for removal from future revisions.
-An implementation may declare library names and entities described in this section with the
-\tcode{deprecated} attribute~(\ref{dcl.attr.deprecated}).
+An implementation may declare library names and entities described in this Clause with the
+\tcode{deprecated} attribute\iref{dcl.attr.deprecated}.
 
-\rSec1[depr.static_constexpr]{Redeclaration of \tcode{static constexpr} data members}
+\rSec1[depr.arith.conv.enum]{Arithmetic conversion on enumerations}
+
+\pnum
+The ability to apply the usual arithmetic conversions\iref{expr.arith.conv}
+on operands where one is of enumeration type
+and the other is of a different enumeration type
+or a floating-point type
+is deprecated.
+\begin{note}
+Three-way comparisons\iref{expr.spaceship} between such operands are ill-formed.
+\end{note}
+\begin{example}
+\begin{codeblock}
+enum E1 { e };
+enum E2 { f };
+bool b = e <= 3.7;              // deprecated
+int k = f - e;                  // deprecated
+auto cmp = e <=> f;             // error
+\end{codeblock}
+\end{example}
+
+\rSec1[depr.capture.this]{Implicit capture of \tcode{*this} by reference}
+
+\pnum
+For compatibility with prior \Cpp{} International Standards,
+a \grammarterm{lambda-expression} with \grammarterm{capture-default}
+\tcode{=}\iref{expr.prim.lambda.capture} may implicitly capture
+\tcode{*this} by reference.
+\begin{example}
+\begin{codeblock}
+struct X {
+  int x;
+  void foo(int n) {
+    auto f = [=]() { x = n; };          // deprecated: \tcode{x} means \tcode{this->x}, not a copy thereof
+    auto g = [=, this]() { x = n; };    // recommended replacement
+  }
+};
+\end{codeblock}
+\end{example}
+
+\rSec1[depr.comma.subscript]{Comma operator in subscript expressions}
+
+\pnum
+A comma expression\iref{expr.comma}
+appearing as the \grammarterm{expr-or-braced-init-list}
+of a subscripting expression\iref{expr.sub} is deprecated.
+\begin{note}
+A parenthesized comma expression is not deprecated.
+\end{note}
+\begin{example}
+\begin{codeblock}
+void f(int *a, int b, int c) {
+    a[b,c];                     // deprecated
+    a[(b,c)];                   // OK
+}
+\end{codeblock}
+\end{example}
+
+\rSec1[depr.array.comp]{Array comparisons}
+
+\pnum
+Equality and relational comparisons (\ref{expr.eq}, \ref{expr.rel})
+between two operands of array type
+are deprecated.
+\begin{note}
+Three-way comparisons\iref{expr.spaceship} between such operands are ill-formed.
+\end{note}
+\begin{example}
+\begin{codeblock}
+int arr1[5];
+int arr2[5];
+bool same = arr1 == arr2;       // deprecated, same as \tcode{\&arr1[0] == \&arr2[0]},
+                                // does not compare array contents
+auto cmp = arr1 <=> arr2;       // error
+\end{codeblock}
+\end{example}
+
+\rSec1[depr.volatile.type]{Deprecated \tcode{volatile} types}
+
+\pnum
+Postfix \tcode{++} and \tcode{\dcr} expressions\iref{expr.post.incr} and
+prefix \tcode{++} and \tcode{\dcr} expressions\iref{expr.pre.incr}
+of \tcode{volatile}-qualified arithmetic and pointer types are deprecated.
+
+\pnum
+Certain assignments
+where the left operand is a \tcode{volatile}-qualified non-class type
+are deprecated; see~\ref{expr.ass}.
+
+\pnum
+A function type\iref{dcl.fct}
+with a parameter with \tcode{volatile}-qualified type or
+with a \tcode{volatile}-qualified return type is deprecated.
+
+\pnum
+A structured binding\iref{dcl.struct.bind} of a \tcode{volatile}-qualified type
+is deprecated.
+
+\rSec1[depr.static.constexpr]{Redeclaration of \tcode{static constexpr} data members}
 
 \pnum
 For compatibility with prior \Cpp{} International Standards, a \tcode{constexpr}
@@ -23,142 +121,324 @@ This usage is deprecated.
 \begin{example}
 \begin{codeblock}
 struct A {
-  static constexpr int n = 5;  // definition (declaration in \CppXIV)
+  static constexpr int n = 5;   // definition (declaration in \CppXIV{})
 };
 
-const int A::n;  // redundant declaration (definition in \CppXIV)
+constexpr int A::n;             // redundant declaration (definition in \CppXIV{})
 \end{codeblock}
 \end{example}
 
 \rSec1[depr.impldec]{Implicit declaration of copy functions}
 
 \pnum
-The implicit definition of a copy constructor
-as defaulted
-is deprecated if the class has a
-user-declared copy assignment operator or a user-declared destructor. The implicit
-definition of a copy assignment operator
-as defaulted is deprecated if the class has a user-declared
-copy constructor or a user-declared destructor (\ref{class.dtor},~\ref{class.copy}).
+The implicit definition of a copy constructor\iref{class.copy.ctor}
+as defaulted is deprecated if the class has
+a user-declared copy assignment operator or
+a user-declared destructor\iref{class.dtor}.
+The implicit definition of a copy assignment operator\iref{class.copy.assign}
+as defaulted is deprecated if the class has
+a user-declared copy constructor or
+a user-declared destructor.
 In a future revision of this International Standard, these implicit definitions
-could become deleted~(\ref{dcl.fct.def}).
+could become deleted\iref{dcl.fct.def.delete}.
 
-\rSec1[depr.except.spec]{Dynamic exception specifications}
-
-\pnum
-The use of \grammarterm{dynamic-exception-specification}{s} is deprecated.
-
-\rSec1[depr.c.headers]{C standard library headers}
+\rSec1[depr.c.headers]{C headers}
 
 \pnum
-For compatibility with the 
+For compatibility with the
 \indextext{library!C standard}%
-C standard library, the \Cpp standard library provides
-the 26 \textit{C headers}, as shown in Table~\ref{tab:future.c.headers}.
+C standard library, the \Cpp{} standard library provides
+the \defnx{C headers}{headers!C library} shown in \tref{depr.c.headers}.
 
-\begin{floattable}{C headers}{tab:future.c.headers}
+\begin{multicolfloattable}{C headers}{depr.c.headers}
 {lllll}
-\topline
+\libheaderdef{assert.h} \\
+\libheader{complex.h} \\
+\libheaderdef{ctype.h} \\
+\libheaderdef{errno.h} \\
+\libheaderdef{fenv.h} \\
+\libheaderdef{float.h} \\
+\columnbreak
+\libheaderdef{inttypes.h} \\
+\libheader{iso646.h} \\
+\libheaderdef{limits.h} \\
+\libheaderdef{locale.h} \\
+\libheaderdef{math.h} \\
+\libheaderdef{setjmp.h} \\
+\columnbreak
+\libheaderdef{signal.h} \\
+\libheader{stdalign.h} \\
+\libheaderdef{stdarg.h} \\
+\libheader{stdbool.h} \\
+\libheaderdef{stddef.h} \\
+\libheaderdef{stdint.h} \\
+\columnbreak
+\libheaderdef{stdio.h} \\
+\libheaderdef{stdlib.h} \\
+\libheaderdef{string.h} \\
+\libheader{tgmath.h} \\
+\libheaderdef{time.h} \\
+\libheaderdef{uchar.h} \\
+\columnbreak
+\libheaderdef{wchar.h} \\
+\libheaderdef{wctype.h} \\
+\end{multicolfloattable}
 
-\tcode{<assert.h>}			&
-\tcode{<inttypes.h>}		&
-\tcode{<signal.h>}			&
-\tcode{<stdio.h>}			  &
-\tcode{<wchar.h>}			  \\
+\rSec2[depr.complex.h.syn]{Header \tcode{<complex.h>} synopsis}
 
-\tcode{<complex.h>}			&
-\tcode{<iso646.h>}			&
-\tcode{<stdalign.h>}    &
-\tcode{<stdlib.h>}			&
-\tcode{<wctype.h>}			\\
-
-\tcode{<ctype.h>}			  &
-\tcode{<limits.h>}			&
-\tcode{<stdarg.h>}			&
-\tcode{<string.h>}			& \\
-
-\tcode{<errno.h>}			  &
-\tcode{<locale.h>}			&
-\tcode{<stdbool.h>}			&
-\tcode{<tgmath.h>}			& \\
-
-\tcode{<fenv.h>}			  &
-\tcode{<math.h>}			  &
-\tcode{<stddef.h>}			&
-\tcode{<time.h>}				& \\
-
-\tcode{<float.h>}			  &
-\tcode{<setjmp.h>}			&
-\tcode{<stdint.h>}			&
-\tcode{<uchar.h>}			  & \\
-
-\end{floattable}
-
-\pnum
-The use of any of the \Cpp headers
-\tcode{<ccomplex>},
-\tcode{<cstdalign>},
-\tcode{<cstdbool>},
-or \tcode{<ctgmath>}
-is deprecated.
+\indexheader{complex.h}%
+\begin{codeblock}
+#include <complex>
+\end{codeblock}
 
 \pnum
-Except for the functions declared in \ref{sf.cmath}, every C header, each of
+The header \libheader{complex.h}
+behaves as if it simply includes the header
+\libheaderref{complex}.
+
+\pnum
+\begin{note}
+Names introduced by \libheader{complex} in namespace \tcode{std}
+are not placed into the global namespace scope by \libheader{complex.h}.
+\end{note}
+
+\rSec2[depr.iso646.h.syn]{Header \tcode{<iso646.h>} synopsis}
+
+\indexheader{iso646.h}%
+\pnum
+The \Cpp{} header \libheader{iso646.h} is empty.
+\begin{note}
+\tcode{and},
+\tcode{and_eq},
+\tcode{bitand},
+\tcode{bitor},
+\tcode{compl},
+\tcode{not_eq},
+\tcode{not},
+\tcode{or},
+\tcode{or_eq},
+\tcode{xor}, and
+\tcode{xor_eq}
+are keywords in this International Standard\iref{lex.key}.
+\end{note}
+
+\rSec2[depr.stdalign.h.syn]{Header \tcode{<stdalign.h>} synopsis}
+
+\indexheader{stdalign.h}%
+\indexlibraryglobal{__alignas_is_defined}%
+\begin{codeblock}
+#define @\xname{alignas_is_defined}@ 1
+\end{codeblock}
+
+\pnum
+The contents of the \Cpp{} header \libheader{stdalign.h} are the same as the C
+standard library header \libheader{stdalign.h}, with the following changes:
+The header \libheader{stdalign.h} does not
+define a macro named \tcode{alignas}.
+
+\xrefc{7.15}
+
+\rSec2[depr.stdbool.h.syn]{Header \tcode{<stdbool.h>} synopsis}
+
+\indexheader{stdbool.h}%
+\indexhdr{stdbool.h}%
+\indexlibraryglobal{__bool_true_false_are_defined}%
+\begin{codeblock}
+#define @\xname{bool_true_false_are_defined}@ 1
+\end{codeblock}
+
+\pnum
+The contents of the \Cpp{} header \libheader{stdbool.h} are the same as the C
+standard library header \libheader{stdbool.h}, with the following changes:
+The header \libheader{stdbool.h} does not
+define macros named \tcode{bool}, \tcode{true}, or \tcode{false}.
+
+\xrefc{7.18}
+
+\rSec2[depr.tgmath.h.syn]{Header \tcode{<tgmath.h>} synopsis}
+
+\indexheader{tgmath.h}%
+\begin{codeblock}
+#include <cmath>
+#include <complex>
+\end{codeblock}
+
+\pnum
+The header \libheader{tgmath.h}
+behaves as if it simply includes the headers
+\libheaderref{cmath} and
+\libheaderref{complex}.
+
+\pnum
+\begin{note}
+The overloads provided in C by type-generic macros
+are already provided in \libheader{complex} and \libheader{cmath}
+by ``sufficient'' additional overloads.
+\end{note}
+
+\pnum
+\begin{note}
+Names introduced by \libheader{cmath} or \libheader{complex}
+in namespace \tcode{std}
+are not placed into the global namespace scope by \libheader{tgmath.h}.
+\end{note}
+
+\rSec2[depr.c.headers.other]{Other C headers}
+
+\pnum
+Every C header
+other than
+\libdeprheaderref{complex.h},
+\libdeprheaderref{iso646.h},
+\libdeprheaderref{stdalign.h},
+\libdeprheaderref{stdbool.h}, and
+\libdeprheaderref{tgmath.h},
+each of
 which has a name of the form
 \indextext{header!C}%
-\tcode{name.h},
+\tcode{<\placeholder{name}.h>},
 behaves as if each name placed in the standard library namespace by
 the corresponding
-\tcode{c\textit{name}}
+\tcode{<c\placeholder{name}>}
 header is placed within
-the global namespace scope. It is unspecified whether these names are first declared or defined within
-namespace scope~(\ref{basic.scope.namespace}) of the namespace
+the global namespace scope,
+except for the functions described in \ref{sf.cmath},
+the declaration of \tcode{std::byte}\iref{cstddef.syn}, and
+the functions and function templates described in \ref{support.types.byteops}.
+It is unspecified whether these names are first declared or defined within
+namespace scope\iref{basic.scope.namespace} of the namespace
 \tcode{std} and are then injected into the global namespace scope by
-explicit \grammarterm{using-declaration}{s}~(\ref{namespace.udecl}).
-\indextext{namespace}%
+explicit \grammarterm{using-declaration}{s}\iref{namespace.udecl}.
 
 \pnum
 \begin{example}
-The header
-\indexlibrary{\idxhdr{cstdlib}}%
-\indexlibrary{\idxhdr{stdlib.h}}%
-\tcode{<cstdlib>} assuredly
+The header \libheader{cstdlib} assuredly
 provides its declarations and definitions within the namespace
 \tcode{std}. It may also provide these names within the
 global namespace.
-The header
-\tcode{<stdlib.h>}
+The header \libheader{stdlib.h}
 assuredly provides the same declarations and definitions within
 the global namespace,
 much as in the C Standard. It may also provide these names within
 the namespace \tcode{std}.
 \end{example}
 
-\rSec1[depr.str.strstreams]{\tcode{char*} streams}
+\indexlibraryglobal{rel_ops}%
+\rSec1[depr.relops]{Relational operators}
 
 \pnum
-The header
-\tcode{<strstream>}
-defines three types that associate stream buffers with
+The header \libheaderref{utility} has the following additions:
+
+\begin{codeblock}
+namespace std::rel_ops {
+  template<class T> bool operator!=(const T&, const T&);
+  template<class T> bool operator> (const T&, const T&);
+  template<class T> bool operator<=(const T&, const T&);
+  template<class T> bool operator>=(const T&, const T&);
+}
+\end{codeblock}
+
+\pnum
+To avoid redundant definitions of \tcode{operator!=} out of \tcode{operator==}
+and operators \tcode{>}, \tcode{<=}, and \tcode{>=} out of \tcode{operator<},
+the library provides the following:
+
+\indexlibrary{\idxcode{operator"!=}}%
+\begin{itemdecl}
+template<class T> bool operator!=(const T& x, const T& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+Type \tcode{T} is \oldconcept{EqualityComparable} (\tref{cpp17.equalitycomparable}).
+
+\pnum
+\returns
+\tcode{!(x == y)}.
+\end{itemdescr}
+
+\indexlibraryglobal{operator>}%
+\begin{itemdecl}
+template<class T> bool operator>(const T& x, const T& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+Type \tcode{T} is \oldconcept{LessThanComparable} (\tref{cpp17.lessthancomparable}).
+
+\pnum
+\returns
+\tcode{y < x}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator<=}}%
+\begin{itemdecl}
+template<class T> bool operator<=(const T& x, const T& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+Type \tcode{T} is \oldconcept{LessThanComparable} (\tref{cpp17.lessthancomparable}).
+
+\pnum
+\returns
+\tcode{!(y < x)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator>=}}%
+\begin{itemdecl}
+template<class T> bool operator>=(const T& x, const T& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+Type \tcode{T} is \oldconcept{LessThanComparable} (\tref{cpp17.lessthancomparable}).
+
+\pnum
+\returns
+\tcode{!(x < y)}.
+\end{itemdescr}
+
+\rSec1[depr.str.strstreams]{\tcode{char*} streams}
+
+\rSec2[depr.strstream.syn]{Header \tcode{<strstream>} synopsis}
+
+\pnum
+The header \libheaderdef{strstream}
+defines types that associate stream buffers with
 character array objects and assist reading and writing such objects.
+
+\begin{codeblock}
+namespace std {
+  class strstreambuf;
+  class istrstream;
+  class ostrstream;
+  class strstream;
+}
+\end{codeblock}
 
 \rSec2[depr.strstreambuf]{Class \tcode{strstreambuf}}
 
-\indexlibrary{\idxcode{strstreambuf}}%
+\indexlibraryglobal{strstreambuf}%
 \begin{codeblock}
 namespace std {
   class strstreambuf : public basic_streambuf<char> {
   public:
-    explicit strstreambuf(streamsize alsize_arg = 0);
+    strstreambuf() : strstreambuf(0) {}
+    explicit strstreambuf(streamsize alsize_arg);
     strstreambuf(void* (*palloc_arg)(size_t), void (*pfree_arg)(void*));
-    strstreambuf(char* gnext_arg, streamsize n, char* pbeg_arg = 0);
+    strstreambuf(char* gnext_arg, streamsize n, char* pbeg_arg = nullptr);
     strstreambuf(const char* gnext_arg, streamsize n);
 
     strstreambuf(signed char* gnext_arg, streamsize n,
-                 signed char* pbeg_arg = 0);
+                 signed char* pbeg_arg = nullptr);
     strstreambuf(const signed char* gnext_arg, streamsize n);
     strstreambuf(unsigned char* gnext_arg, streamsize n,
-                 unsigned char* pbeg_arg = 0);
+                 unsigned char* pbeg_arg = nullptr);
     strstreambuf(const unsigned char* gnext_arg, streamsize n);
 
     virtual ~strstreambuf();
@@ -180,15 +460,15 @@ namespace std {
     streambuf* setbuf(char* s, streamsize n) override;
 
   private:
-    using strstate = T1;              // \expos
-    static const strstate allocated;  // \expos
-    static const strstate constant;   // \expos
-    static const strstate dynamic;    // \expos
-    static const strstate frozen;     // \expos
-    strstate strmode;                 // \expos
-    streamsize alsize;                // \expos
-    void* (*palloc)(size_t);          // \expos
-    void (*pfree)(void*);             // \expos
+    using strstate = T1;                // \expos
+    static const strstate allocated;    // \expos
+    static const strstate constant;     // \expos
+    static const strstate dynamic;      // \expos
+    static const strstate frozen;       // \expos
+    strstate strmode;                   // \expos
+    streamsize alsize;                  // \expos
+    void* (*palloc)(size_t);            // \expos
+    void (*pfree)(void*);               // \expos
   };
 }
 \end{codeblock}
@@ -256,22 +536,19 @@ if \tcode{pend} is not a null pointer, or \tcode{gend}.
 
 \rSec3[depr.strstreambuf.cons]{\tcode{strstreambuf} constructors}
 
-\indexlibrary{\idxcode{strstreambuf}!constructor}%
+\indexlibraryctor{strstreambuf}%
 \begin{itemdecl}
-explicit strstreambuf(streamsize alsize_arg = 0);
+explicit strstreambuf(streamsize alsize_arg);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{strstreambuf},
-initializing the base class with
-\tcode{streambuf()}.
-The postconditions of this function are indicated in Table~\ref{tab:future.strstreambuf.effects}.
+Initializes the base class with \tcode{streambuf()}.
+The postconditions of this function are indicated in \tref{depr.strstreambuf.cons.sz}.
 \end{itemdescr}
 
-\begin{libtab2}{\tcode{strstreambuf(streamsize)} effects}{tab:future.strstreambuf.effects}
+\begin{libtab2}{\tcode{strstreambuf(streamsize)} effects}{depr.strstreambuf.cons.sz}
 {ll}
 {Element}{Value}
 \tcode{strmode}	&	\tcode{dynamic}		\\
@@ -280,7 +557,7 @@ The postconditions of this function are indicated in Table~\ref{tab:future.strst
 \tcode{pfree}	&	a null pointer		\\
 \end{libtab2}
 
-\indexlibrary{\idxcode{strstreambuf}!constructor}%
+\indexlibraryctor{strstreambuf}%
 \begin{itemdecl}
 strstreambuf(void* (*palloc_arg)(size_t), void (*pfree_arg)(void*));
 \end{itemdecl}
@@ -288,14 +565,11 @@ strstreambuf(void* (*palloc_arg)(size_t), void (*pfree_arg)(void*));
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{strstreambuf},
-initializing the base class with
-\tcode{streambuf()}.
-The postconditions of this function are indicated in Table~\ref{tab:future.strstreambuf1.effects}.
+Initializes the base class with \tcode{streambuf()}.
+The postconditions of this function are indicated in \tref{depr.strstreambuf.cons.alloc}.
 
 \begin{libtab2}{\tcode{strstreambuf(void* (*)(size_t), void (*)(void*))} effects}
-{tab:future.strstreambuf1.effects}
+{depr.strstreambuf.cons.alloc}
 {ll}
 {Element}{Value}
 \tcode{strmode}	&	\tcode{dynamic}			\\
@@ -306,26 +580,23 @@ The postconditions of this function are indicated in Table~\ref{tab:future.strst
 \end{itemdescr}
 
 \indextext{unspecified}%
-\indexlibrary{\idxcode{strstreambuf}!constructor}%
+\indexlibraryctor{strstreambuf}%
 \begin{itemdecl}
-strstreambuf(char* gnext_arg, streamsize n, char* pbeg_arg = 0);
+strstreambuf(char* gnext_arg, streamsize n, char* pbeg_arg = nullptr);
 strstreambuf(signed char* gnext_arg, streamsize n,
-             signed char* pbeg_arg = 0);
+             signed char* pbeg_arg = nullptr);
 strstreambuf(unsigned char* gnext_arg, streamsize n,
-             unsigned char* pbeg_arg = 0);
+             unsigned char* pbeg_arg = nullptr);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{strstreambuf},
-initializing the base class with
-\tcode{streambuf()}.
-The postconditions of this function are indicated in Table~\ref{tab:future.strstreambuf2.effects}.
+Initializes the base class with \tcode{streambuf()}.
+The postconditions of this function are indicated in \tref{depr.strstreambuf.cons.ptr}.
 
 \begin{libtab2}{\tcode{strstreambuf(charT*, streamsize, charT*)} effects}
-{tab:future.strstreambuf2.effects}
+{depr.strstreambuf.cons.ptr}
 {ll}
 {Element}{Value}
 \tcode{strmode}	&	0						\\
@@ -347,33 +618,24 @@ If
 \tcode{n == 0},
 \tcode{N} is
 \tcode{std::strlen(gnext_arg)}.
-\indexlibrary{\idxcode{strlen}}%
+\indexlibraryglobal{strlen}%
 \item
 If
 \tcode{n < 0},
 \tcode{N} is
 \tcode{INT_MAX}.\footnote{The function signature
+\indexlibraryglobal{strlen}%
 \tcode{strlen(const char*)}
-is declared in
-\tcode{<cstring>}.
-\indexlibrary{\idxcode{strlen}}%
-\indexlibrary{\idxhdr{cstring}}%
-(\ref{c.strings}).
-The macro
-\tcode{INT_MAX}
-is defined in
-\tcode{<climits>}~(\ref{support.limits}).
-\indexlibrary{\idxhdr{climits}}}
+is declared in \libheaderref{cstring}.
+The macro \tcode{INT_MAX} is defined in \libheaderref{climits}.}
 \end{itemize}
 
 \pnum
 If \tcode{pbeg_arg} is a null pointer, the function executes:
 
-\indexlibrary{\idxcode{strstreambuf}!\idxcode{setg}}%
-\indexlibrary{\idxcode{setg}!\idxcode{strstreambuf}}%
-\begin{itemdecl}
+\begin{codeblock}
 setg(gnext_arg, gnext_arg, gnext_arg + N);
-\end{itemdecl}
+\end{codeblock}
 
 \pnum
 Otherwise, the function executes:
@@ -381,12 +643,18 @@ Otherwise, the function executes:
 \begin{codeblock}
 setg(gnext_arg, gnext_arg, pbeg_arg);
 setp(pbeg_arg,  pbeg_arg + N);
+\end{codeblock}
+\end{itemdescr}
 
+
+\indexlibraryctor{strstreambuf}%
+\begin{itemdecl}
 strstreambuf(const char* gnext_arg, streamsize n);
 strstreambuf(const signed char* gnext_arg, streamsize n);
 strstreambuf(const unsigned char* gnext_arg, streamsize n);
-\end{codeblock}
+\end{itemdecl}
 
+\begin{itemdescr}
 \pnum
 \effects
 Behaves the same as
@@ -394,7 +662,7 @@ Behaves the same as
 except that the constructor also sets \tcode{constant} in \tcode{strmode}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{strstreambuf}!destructor}%
+\indexlibrarydtor{strstreambuf}%
 \begin{itemdecl}
 virtual ~strstreambuf();
 \end{itemdecl}
@@ -405,14 +673,14 @@ virtual ~strstreambuf();
 Destroys an object of class
 \tcode{strstreambuf}.
 The function frees the dynamically allocated array object only if
-\tcode{strmode \& allocated != 0}
+\tcode{(strmode \& allocated) != 0}
 and
-\tcode{strmode \& frozen == 0}.~(\ref{depr.strstreambuf.virtuals} describes how a dynamically allocated array object is freed.)
+\tcode{(strmode \& frozen) == 0}.~(\ref{depr.strstreambuf.virtuals} describes how a dynamically allocated array object is freed.)
 \end{itemdescr}
 
 \rSec3[depr.strstreambuf.members]{Member functions}
 
-\indexlibrary{\idxcode{freeze}!\idxcode{strstreambuf}}%
+\indexlibrarymember{freeze}{strstreambuf}%
 \begin{itemdecl}
 void freeze(bool freezefl = true);
 \end{itemdecl}
@@ -420,7 +688,7 @@ void freeze(bool freezefl = true);
 \begin{itemdescr}
 \pnum
 \effects
-If \tcode{strmode} \& \tcode{dynamic} is non-zero, alters the
+If \tcode{strmode \& dynamic} is nonzero, alters the
 freeze status of the dynamic array object as follows:
 \begin{itemize}
 \item
@@ -432,7 +700,7 @@ Otherwise, it clears \tcode{frozen} in \tcode{strmode}.
 \end{itemize}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{str}!\idxcode{strstreambuf}}%
+\indexlibrarymember{str}{strstreambuf}%
 \begin{itemdecl}
 char* str();
 \end{itemdecl}
@@ -449,7 +717,7 @@ then returns the beginning pointer for the input sequence, \tcode{gbeg}.
 The return value can be a null pointer.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{pcount}!\idxcode{strstreambuf}}%
+\indexlibrarymember{pcount}{strstreambuf}%
 \begin{itemdecl}
 int pcount() const;
 \end{itemdecl}
@@ -461,12 +729,12 @@ If the next pointer for the output sequence, \tcode{pnext}, is
 a null pointer, returns zero.
 Otherwise, returns the current
 effective length of the array object as the next pointer minus the beginning
-pointer for the output sequence, \tcode{pnext} - \tcode{pbeg}.
+pointer for the output sequence, \tcode{pnext - pbeg}.
 \end{itemdescr}
 
 \rSec3[depr.strstreambuf.virtuals]{\tcode{strstreambuf} overridden virtual functions}
 
-\indexlibrary{\idxcode{overflow}!\idxcode{strstreambuf}}%
+\indexlibrarymember{overflow}{strstreambuf}%
 \begin{itemdecl}
 int_type overflow(int_type c = EOF) override;
 \end{itemdecl}
@@ -537,13 +805,13 @@ Otherwise, it evaluates the expression \tcode{delete[]p}.
 
 \pnum
 If
-\tcode{strmode \& dynamic == 0},
+\tcode{(strmode \& dynamic) == 0},
 or if
-\tcode{strmode \& frozen != 0},
+\tcode{(strmode \& frozen) != 0},
 the function cannot extend the array (reallocate it with greater length) to make a write position available.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{pbackfail}!\idxcode{strstreambuf}}%
+\indexlibrarymember{pbackfail}{strstreambuf}%
 \begin{itemdecl}
 int_type pbackfail(int_type c = EOF) override;
 \end{itemdecl}
@@ -567,7 +835,7 @@ Returns \tcode{c}.
 If
 \tcode{c != EOF},
 if the input sequence has a putback position available, and if
-\tcode{strmode} \& \tcode{constant} is zero,
+\tcode{strmode \& constant} is zero,
 assigns \tcode{c} to
 \tcode{*\dcr{}gnext}.
 
@@ -599,7 +867,7 @@ The function can alter the number of putback
 positions available as a result of any call.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{underflow}!\idxcode{strstreambuf}}%
+\indexlibrarymember{underflow}{strstreambuf}%
 \begin{itemdecl}
 int_type underflow() override;
 \end{itemdecl}
@@ -625,7 +893,7 @@ available by
 assigning to \tcode{gend} a value greater than \tcode{gnext} and
 no greater than \tcode{pnext}.
 
-Returns \tcode{(unsigned char*)gnext}.
+Returns \tcode{(unsigned char)*gnext}.
 \end{itemize}
 
 \pnum
@@ -639,7 +907,7 @@ The function can alter the number of read positions available as a
 result of any call.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{seekoff}!\idxcode{strstreambuf}}%
+\indexlibrarymember{seekoff}{strstreambuf}%
 \begin{itemdecl}
 pos_type seekoff(off_type off, seekdir way, openmode which = in | out) override;
 \end{itemdecl}
@@ -648,9 +916,9 @@ pos_type seekoff(off_type off, seekdir way, openmode which = in | out) override;
 \pnum
 \effects
 Alters the stream position within one of the
-controlled sequences, if possible, as indicated in Table~\ref{tab:future.seekoff.positioning}.
+controlled sequences, if possible, as indicated in \tref{depr.strstreambuf.seekoff.pos}.
 
-\begin{libtab2}{\tcode{seekoff} positioning}{tab:future.seekoff.positioning}
+\begin{libtab2}{\tcode{seekoff} positioning}{depr.strstreambuf.seekoff.pos}
 {p{2.5in}l}{Conditions}{Result}
 \tcode{(which \& ios::in) != 0}	&
  positions the input sequence	\\ \rowsep
@@ -658,10 +926,9 @@ controlled sequences, if possible, as indicated in Table~\ref{tab:future.seekoff
  positions the output sequence	\\ \rowsep
 \tcode{(which \& (ios::in |}\br
 \tcode{ios::out)) == (ios::in |}\br
-\tcode{ios::out))} and\br
-\tcode{way ==} either\br
-\tcode{ios::beg} or\br
-\tcode{ios::end}			&
+\tcode{ios::out))} and either\br
+\tcode{way == ios::beg} or\br
+\tcode{way == ios::end}			&
  positions both the input and the output sequences	\\ \rowsep
 Otherwise	&
  the positioning operation fails.	\\
@@ -671,9 +938,9 @@ Otherwise	&
 For a sequence to be positioned, if its next pointer is a null pointer,
 the positioning operation fails.
 Otherwise, the function determines \tcode{newoff} as indicated in
-Table~\ref{tab:future.newoff.values}.
+\tref{depr.strstreambuf.seekoff.newoff}.
 
-\begin{libtab2}{\tcode{newoff} values}{tab:future.newoff.values}
+\begin{libtab2}{\tcode{newoff} values}{depr.strstreambuf.seekoff.newoff}
 {p{2.0in}p{2.0in}}{Condition}{\tcode{newoff} Value}
 \tcode{way == ios::beg}	&
  0	\\ \rowsep
@@ -704,7 +971,7 @@ the return value is
 \tcode{pos_type(off_type(-1))}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{seekpos}!\idxcode{strstreambuf}}%
+\indexlibrarymember{seekpos}{strstreambuf}%
 \begin{itemdecl}
 pos_type seekpos(pos_type sp, ios_base::openmode which
                   = ios_base::in | ios_base::out) override;
@@ -739,7 +1006,7 @@ Otherwise, the function determines \tcode{newoff} from
 \item
 If \tcode{newoff} is an invalid stream position,
 has a negative value, or
-has a value greater than (\tcode{seekhigh} - \tcode{seeklow}),
+has a value greater than (\tcode{seekhigh - seeklow}),
 the positioning operation fails
 \item
 Otherwise, the function
@@ -760,7 +1027,7 @@ the return value is
 \tcode{pos_type(off_type(-1))}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{setbuf}!\idxcode{strstreambuf}}%
+\indexlibrarymember{setbuf}{strstreambuf}%
 \begin{itemdecl}
 streambuf<char>* setbuf(char* s, streamsize n) override;
 \end{itemdecl}
@@ -768,15 +1035,15 @@ streambuf<char>* setbuf(char* s, streamsize n) override;
 \begin{itemdescr}
 \pnum
 \effects
-Implementation defined, except that
+Behavior is \impldef{behavior of \tcode{strstreambuf::setbuf}},
+except that
 \tcode{setbuf(0, 0)}
 has no effect.%
-\indexlibrary{\idxcode{setbuf}!\idxcode{streambuf}}
 \end{itemdescr}
 
 \rSec2[depr.istrstream]{Class \tcode{istrstream}}
 
-\indexlibrary{\idxcode{istrstream}}%
+\indexlibraryglobal{istrstream}%
 \begin{codeblock}
 namespace std {
   class istrstream : public basic_istream<char> {
@@ -790,7 +1057,7 @@ namespace std {
     strstreambuf* rdbuf() const;
     char* str();
   private:
-    strstreambuf sb;  // \expos
+    strstreambuf sb;            // \expos
   };
 }
 \end{codeblock}
@@ -812,7 +1079,7 @@ For the sake of exposition, the maintained data is presented here as:
 
 \rSec3[depr.istrstream.cons]{\tcode{istrstream} constructors}
 
-\indexlibrary{\idxcode{istrstream}!constructor}%
+\indexlibraryctor{istrstream}%
 \begin{itemdecl}
 explicit istrstream(const char* s);
 explicit istrstream(char* s);
@@ -821,37 +1088,30 @@ explicit istrstream(char* s);
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{istrstream},
-initializing the base class with
-\tcode{istream(\&sb)}
-and initializing \tcode{sb} with
-\tcode{strstreambuf(s,0))}.
-\tcode{s} shall designate the first element of an \ntbs.%
+Initializes the base class with \tcode{istream(\&sb)} and
+\tcode{sb} with \tcode{strstreambuf(s, 0)}.
+\tcode{s} shall designate the first element of an \ntbs{}.%
 \indextext{NTBS}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{istrstream}!constructor}%
+\indexlibraryctor{istrstream}%
 \begin{itemdecl}
 istrstream(const char* s, streamsize n);
+istrstream(char* s, streamsize n);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{istrstream},
-initializing the base class with
-\tcode{istream(\&sb)}
-and initializing \tcode{sb} with
-\tcode{strstreambuf(s,n))}.
+Initializes the base class with \tcode{istream(\&sb)}
+and \tcode{sb} with \tcode{strstreambuf(s, n)}.
 \tcode{s} shall designate the first element of an array whose length is
 \tcode{n} elements, and \tcode{n} shall be greater than zero.
 \end{itemdescr}
 
 \rSec3[depr.istrstream.members]{Member functions}
 
-\indexlibrary{\idxcode{rdbuf}!\idxcode{istrstream}}%
+\indexlibrarymember{rdbuf}{istrstream}%
 \begin{itemdecl}
 strstreambuf* rdbuf() const;
 \end{itemdecl}
@@ -862,7 +1122,7 @@ strstreambuf* rdbuf() const;
 \tcode{const_cast<strstreambuf*>(\&sb)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{str}!\idxcode{istrstream}}%
+\indexlibrarymember{str}{istrstream}%
 \begin{itemdecl}
 char* str();
 \end{itemdecl}
@@ -875,7 +1135,7 @@ char* str();
 
 \rSec2[depr.ostrstream]{Class \tcode{ostrstream}}
 
-\indexlibrary{\idxcode{ostrstream}}%
+\indexlibraryglobal{ostrstream}%
 \begin{codeblock}
 namespace std {
   class ostrstream : public basic_ostream<char> {
@@ -889,7 +1149,7 @@ namespace std {
     char* str();
     int pcount() const;
   private:
-    strstreambuf sb;  // \expos
+    strstreambuf sb;            // \expos
   };
 }
 \end{codeblock}
@@ -911,23 +1171,19 @@ For the sake of exposition, the maintained data is presented here as:
 
 \rSec3[depr.ostrstream.cons]{\tcode{ostrstream} constructors}
 
-\indexlibrary{\idxcode{ostrstream}!constructor}%
+\indexlibraryctor{ostrstream}%
 \begin{itemdecl}
-    ostrstream();
+ostrstream();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{ostrstream},
-initializing the base class with
-\tcode{ostream(\&sb)}
-and initializing \tcode{sb} with
-\tcode{strstreambuf())}.
+Initializes the base class with \tcode{ostream(\&sb)} and
+\tcode{sb} with \tcode{strstreambuf()}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{ostrstream}!constructor}%
+\indexlibraryctor{ostrstream}%
 \begin{itemdecl}
 ostrstream(char* s, int n, ios_base::openmode mode = ios_base::out);
 \end{itemdecl}
@@ -935,11 +1191,8 @@ ostrstream(char* s, int n, ios_base::openmode mode = ios_base::out);
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{ostrstream},
-initializing the base class with
-\tcode{ostream(\&sb)},
-and initializing \tcode{sb} with one of two constructors:
+Initializes the base class with \tcode{ostream(\&sb)},
+and \tcode{sb} with one of two constructors:
 
 \begin{itemize}
 \item
@@ -953,22 +1206,19 @@ The constructor is
 If
 \tcode{(mode \& app) != 0},
 then \tcode{s} shall designate the first element of an array of \tcode{n} elements that
-contains an \ntbs whose first element is designated by \tcode{s}.
+contains an \ntbs{} whose first element is designated by \tcode{s}.
 \indextext{NTBS}%
 The constructor is
 \tcode{strstreambuf(s, n, s + std::strlen(s))}.\footnote{The function signature
+\indexlibraryglobal{strlen}%
 \tcode{strlen(const char*)}
-is declared in
-\tcode{<cstring>}
-\indexlibrary{\idxcode{strlen}}%
-\indexlibrary{\idxhdr{cstring}}%
-(\ref{c.strings}).}
+is declared in \libheaderref{cstring}.}
 \end{itemize}
 \end{itemdescr}
 
 \rSec3[depr.ostrstream.members]{Member functions}
 
-\indexlibrary{\idxcode{rdbuf}!\idxcode{ostrstream}}%
+\indexlibrarymember{rdbuf}{ostrstream}%
 \begin{itemdecl}
 strstreambuf* rdbuf() const;
 \end{itemdecl}
@@ -976,10 +1226,10 @@ strstreambuf* rdbuf() const;
 \begin{itemdescr}
 \pnum
 \returns
-\tcode{(strstreambuf*)\&sb }.
+\tcode{(strstreambuf*)\&sb}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{freeze}!\idxcode{ostrstream}}%
+\indexlibrarymember{freeze}{ostrstream}%
 \begin{itemdecl}
 void freeze(bool freezefl = true);
 \end{itemdecl}
@@ -991,7 +1241,7 @@ Calls
 \tcode{rdbuf()->freeze(freezefl)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{str}!\idxcode{ostrstream}}%
+\indexlibrarymember{str}{ostrstream}%
 \begin{itemdecl}
 char* str();
 \end{itemdecl}
@@ -1002,7 +1252,7 @@ char* str();
 \tcode{rdbuf()->str()}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{pcount}!\idxcode{ostrstream}}%
+\indexlibrarymember{pcount}{ostrstream}%
 \begin{itemdecl}
 int pcount() const;
 \end{itemdecl}
@@ -1015,13 +1265,13 @@ int pcount() const;
 
 \rSec2[depr.strstream]{Class \tcode{strstream}}
 
-\indexlibrary{\idxcode{strstream}}%
+\indexlibraryglobal{strstream}%
 \begin{codeblock}
 namespace std {
   class strstream
     : public basic_iostream<char> {
   public:
-    // Types
+    // types
     using char_type = char;
     using int_type  = char_traits<char>::int_type;
     using pos_type  = char_traits<char>::pos_type;
@@ -1033,14 +1283,14 @@ namespace std {
               ios_base::openmode mode = ios_base::in|ios_base::out);
     virtual ~strstream();
 
-    // Members:
+    // members
     strstreambuf* rdbuf() const;
     void freeze(bool freezefl = true);
     int pcount() const;
     char* str();
 
   private:
-  strstreambuf sb;  // \expos
+    strstreambuf sb;            // \expos
   };
 }
 \end{codeblock}
@@ -1062,7 +1312,7 @@ For the sake of exposition, the maintained data is presented here as:
 
 \rSec3[depr.strstream.cons]{\tcode{strstream} constructors}
 
-\indexlibrary{\idxcode{strstream}!constructor}%
+\indexlibraryctor{strstream}%
 \begin{itemdecl}
 strstream();
 \end{itemdecl}
@@ -1070,13 +1320,10 @@ strstream();
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{strstream},
-initializing the base class with
-\tcode{iostream(\&sb)}.
+Initializes the base class with \tcode{iostream(\&sb)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{strstream}!constructor}%
+\indexlibraryctor{strstream}%
 \begin{itemdecl}
 strstream(char* s, int n,
           ios_base::openmode mode = ios_base::in|ios_base::out);
@@ -1085,11 +1332,8 @@ strstream(char* s, int n,
 \begin{itemdescr}
 \pnum
 \effects
-Constructs an object of class
-\tcode{strstream},
-initializing the base class with
-\tcode{iostream(\&sb)}
-and initializing \tcode{sb} with one of the two constructors:
+Initializes the base class with \tcode{iostream(\&sb)},
+and \tcode{sb} with one of the two constructors:
 \begin{itemize}
 \item
 If
@@ -1102,16 +1346,16 @@ If
 \tcode{(mode \& app) != 0},
 then \tcode{s} shall
 designate the first element of an array of \tcode{n} elements that contains
-an \ntbs whose first element is designated by \tcode{s}.
+an \ntbs{} whose first element is designated by \tcode{s}.
 The constructor is
 \tcode{strstreambuf(s,n,s + std::strlen(s))}.
-\indexlibrary{\idxcode{strstream}!destructor}%
+\indexlibrarydtor{strstream}%
 \end{itemize}
 \end{itemdescr}
 
 \rSec3[depr.strstream.dest]{\tcode{strstream} destructor}
 
-\indexlibrary{\idxcode{strstream}!destructor}%
+\indexlibrarydtor{strstream}%
 \begin{itemdecl}
 virtual ~strstream();
 \end{itemdecl}
@@ -1123,7 +1367,9 @@ Destroys an object of class
 \tcode{strstream}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{rdbuf}!\idxcode{strstream}}%
+\rSec3[depr.strstream.oper]{\tcode{strstream} operations}
+
+\indexlibrarymember{rdbuf}{strstream}%
 \begin{itemdecl}
 strstreambuf* rdbuf() const;
 \end{itemdecl}
@@ -1131,12 +1377,10 @@ strstreambuf* rdbuf() const;
 \begin{itemdescr}
 \pnum
 \returns
-\tcode{\&sb}.
+\tcode{const_cast<strstreambuf*>(\&sb)}.
 \end{itemdescr}
 
-\rSec3[depr.strstream.oper]{\tcode{strstream} operations}
-
-\indexlibrary{\idxcode{freeze}!\idxcode{strstream}}%
+\indexlibrarymember{freeze}{strstream}%
 \begin{itemdecl}
 void freeze(bool freezefl = true);
 \end{itemdecl}
@@ -1148,7 +1392,7 @@ Calls
 \tcode{rdbuf()->freeze(freezefl)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{str}!\idxcode{strstream}}%
+\indexlibrarymember{str}{strstream}%
 \begin{itemdecl}
 char* str();
 \end{itemdecl}
@@ -1159,7 +1403,7 @@ char* str();
 \tcode{rdbuf()->str()}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{pcount}!\idxcode{strstream}}%
+\indexlibrarymember{pcount}{strstream}%
 \begin{itemdecl}
 int pcount() const;
 \end{itemdecl}
@@ -1170,855 +1414,63 @@ int pcount() const;
 \tcode{rdbuf()->pcount()}.
 \end{itemdescr}
 
-\rSec1[exception.unexpected]{Violating \grammarterm{exception-specification}{s}}
-
-\rSec2[unexpected.handler]{Type \tcode{unexpected_handler}}
-
-\indexlibrary{\idxcode{unexpected_handler}}%
-\begin{itemdecl}
-using unexpected_handler = void (*)();
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-The type of a
-\term{handler function}
-to be called by
-\tcode{unexpected()}
-when a function attempts to throw an exception not listed in its
-\grammarterm{dynamic-exception-specification}.
+\rSec1[depr.meta.types]{Deprecated type traits}
 
 \pnum
-\required
-An
-\tcode{unexpected_handler}
-shall not return.
-See also~\ref{except.unexpected}.
+The header \libheaderrefx{type_traits}{meta.type.synop}
+has the following addition:
 
-\pnum
-\default
-The implementation's default \tcode{unexpected_handler} calls
-\tcode{std::terminate()}.
-\indexlibrary{\idxcode{terminate}}
-\end{itemdescr}
-
-\rSec2[set.unexpected]{\tcode{set_unexpected}}
-
-\indexlibrary{\idxcode{set_unexpected}}%
-\begin{itemdecl}
-unexpected_handler set_unexpected(unexpected_handler f) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Establishes the function designated by \tcode{f} as the current
-\tcode{unexpected_handler}.
-
-\pnum
-\remark It is unspecified whether a null pointer value designates the default
-\tcode{unexpected_handler}.
-
-\pnum
-\returns
-The previous \tcode{unexpected_handler}.
-\end{itemdescr}
-
-\rSec2[get.unexpected]{\tcode{get_unexpected}}
-
-\begin{itemdecl}
-unexpected_handler get_unexpected() noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns The current \tcode{unexpected_handler}.
-\begin{note} This may be a null pointer value. \end{note}
-\end{itemdescr}
-
-\rSec2[unexpected]{\tcode{unexpected}}
-
-\indexlibrary{\idxcode{unexpected}}%
-\begin{itemdecl}
-[[noreturn]] void unexpected();
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\remarks
-Called by the implementation when a function exits via an exception not allowed by its
-\grammarterm{exception-specification}~(\ref{except.unexpected}).
-May also be called directly by the program.
-
-\pnum
-\effects
-Calls an \tcode{unexpected_handler} function. It is unspecified which
-\tcode{unexpected_handler} function will be called if an exception is active
-during a call to \tcode{set_unexpected}.
-Otherwise calls the current \tcode{unexpected_handler} function.
-\begin{note} A default \tcode{unexpected_handler} is always considered a callable handler in
-this context. \end{note}
-\end{itemdescr}
-
-\rSec1[depr.uncaught]{\tcode{uncaught_exception}}
-
-\indexlibrary{\idxcode{uncaught_exception}}%
-\begin{itemdecl}
-bool uncaught_exception() noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{uncaught_exceptions() > 0}.
-\end{itemdescr}
-
-\rSec1[depr.func.adaptor.binding]{Old adaptable function bindings}
-
-\rSec2[depr.weak.result_type]{Weak result types}
-
-\pnum
-A call wrapper~(\ref{func.def}) may have a \defn{weak result type}.
-If it does, the type of its member type \tcode{result_type}
-is based on the type \tcode{T} of the wrapper's target object:
-\begin{itemize}
-\item if \tcode{T} is a pointer to function type,
-\tcode{result_type} shall be a synonym for the return type of \tcode{T};
-\item if \tcode{T} is a pointer to member function,
-\tcode{result_type} shall be a synonym for the return type of \tcode{T};
-\item if \tcode{T} is a class type
-and the \grammarterm{qualified-id} \tcode{T::result_type} is valid and denotes a type~(\ref{temp.deduct}),
-then \tcode{result_type} shall be a synonym for \tcode{T::result_type};
-\item otherwise \tcode{result_type} shall not be defined.
-\end{itemize}
-
-\rSec2[depr.func.adaptor.typedefs]{Typedefs to support function binders}
-
-\pnum
-To enable old function adaptors to manipulate function objects
-that take one or two arguments,
-many of the function objects in this standard
-correspondingly provide \grammarterm{typedef-name}{s}
-\tcode{argument_type} and \tcode{result_type}
-for function objects that take one argument and
-\tcode{first_argument_type}, \tcode{second_argument_type}, and \tcode{result_type}
-for function objects that take two arguments.
-
-\pnum
-The following member names are defined in addition to names specified in Clause~\ref{utilities}:
-
-\indexlibrary{\idxcode{argument_type}}%
-\indexlibrary{\idxcode{first_argument_type}}%
-\indexlibrary{\idxcode{second_argument_type}}%
-\indexlibrary{\idxcode{result_type}}%
+\indexlibraryglobal{is_literal_type}%
 \begin{codeblock}
 namespace std {
-  template<class T> struct owner_less<shared_ptr<T> > {
-    using result_type          = bool;
-    using first_argument_type  = shared_ptr<T>;
-    using second_argument_type = shared_ptr<T>;
-  };
-
-  template<class T> struct owner_less<weak_ptr<T> > {
-    using result_type          = bool;
-    using first_argument_type  = weak_ptr<T>;
-    using second_argument_type = weak_ptr<T>;
-  };
-
-  template <class T> class reference_wrapper {
-  public :
-    using result_type          = @\seebelow@; // not always defined
-    using argument_type        = @\seebelow@; // not always defined
-    using first_argument_type  = @\seebelow@; // not always defined
-    using second_argument_type = @\seebelow@; // not always defined
-  };
-
-  template <class T> struct plus {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct minus {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct multiplies {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct divides {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct modulus {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct negate {
-    using argument_type = T;
-    using result_type   = T;
-  };
-
-  template <class T> struct equal_to {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct not_equal_to {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct greater {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct less {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct greater_equal {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct less_equal {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct logical_and {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct logical_or {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = bool;
-  };
-
-  template <class T> struct logical_not {
-    using argument_type = T;
-    using result_type   = bool;
-  };
-
-  template <class T> struct bit_and {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct bit_or {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct bit_xor {
-    using first_argument_type  = T;
-    using second_argument_type = T;
-    using result_type          = T;
-  };
-
-  template <class T> struct bit_not {
-    using argument_type = T;
-    using result_type   = T;
-  };
-
-  template<class R, class T1>
-  class function<R(T1)> {
-  public:
-    using argument_type = T1;
-  };
-
-  template<class R, class T1, class T2>
-  class function<R(T1, T2)> {
-  public:
-    using first_argument_type  = T1;
-    using second_argument_type = T2;
-  };
+  template<class T> struct is_pod;
+  template<class T> inline constexpr bool is_pod_v = is_pod<T>::value;
 }
 \end{codeblock}
 
 \pnum
-\tcode{reference_wrapper<T>} has a weak result type~(\ref{depr.weak.result_type}).
-If \tcode{T} is a function type,
-\tcode{result_type} shall be a synonym for the return type of \tcode{T}.
+The behavior of a program that adds specializations for
+any of the templates defined in this subclause is undefined,
+unless explicitly permitted by the specification of the corresponding template.
 
-\pnum
-The template specialization \tcode{reference_wrapper<T>}
-shall define a nested type named \tcode{argument_type}
-as a synonym for \tcode{T1}
-only if the type \tcode{T} is any of the following:
-\begin{itemize}
-\item a function type or a pointer to function type taking one argument of type \tcode{T1}
-% FIXME: Should this be R T0::f() ?
-\item a pointer to member function \tcode{R T0::f} \cv{} (where \cv{} represents the member function's cv-qualifiers); the type \tcode{T1} is \cv{} \tcode{T0*}
-\item a class type where the \grammarterm{qualified-id} \tcode{T::argument_type}
-is valid and denotes a type~(\ref{temp.deduct});
-the type \tcode{T1} is \tcode{T::argument_type}.
-\end{itemize}
-
-\pnum
-The template instantiation \tcode{reference_wrapper<T>}
-shall define two nested types
-named \tcode{first_argument_type} and \tcode{second_argument_type}
-as synonyms for \tcode{T1} and \tcode{T2}, respectively,
-only if the type \tcode{T} is any of the following:
-\begin{itemize}
-\item a function type or a pointer to function type taking two arguments of types \tcode{T1} and \tcode{T2}
-\item a pointer to member function \tcode{R T0::f(T2)} \cv{} (where \cv{} represents the member function's cv-qualifiers); the type \tcode{T1} is \cv{} \tcode{T0*}
-\item a class type where the \grammarterm{qualified-id}{s}
-\tcode{T::first_argument_type} and \tcode{T::second_argument_type}
-are both valid and both denote types~(\ref{temp.deduct});
-the type \tcode{T1} is \tcode{T::first_argument_type} and
-the type \tcode{T2} is \tcode{T::second_argument_type}.
-\end{itemize}
-
-\pnum
-For all object types \tcode{Key} for which there exists a specialization \tcode{hash<Key>},
-and for all enumeration types~(\ref{dcl.enum}) \tcode{Key},
-the instantiation \tcode{hash<Key>} shall provide two nested types,
-\tcode{result_type} and \tcode{argument_type},
-which shall be synonyms for \tcode{size_t} and \tcode{Key}, respectively.
-
-\pnum
-The forwarding call wrapper \tcode{g}
-returned by a call to \tcode{bind(f, bound_args...)}~(\ref{func.bind.bind})
-shall have a weak result type~(\ref{depr.weak.result_type}).
-
-\pnum
-The forwarding call wrapper \tcode{g}
-returned by a call to \tcode{bind<R>(f, bound_args...)}~(\ref{func.bind.bind})
-shall have a nested type \tcode{result_type} defined as a synonym for \tcode{R}.
-
-\pnum
-The simple call wrapper
-returned from a call to \tcode{mem_fn(pm)}
-shall have a nested type \tcode{result_type}
-that is a synonym for
-the return type of \tcode{pm}
-when \tcode{pm} is a pointer to member function.
-
-\pnum
-The simple call wrapper
-returned from a call to \tcode{mem_fn(pm)}
-shall define two nested types
-named \tcode{argument_type} and \tcode{result_type}
-as synonyms for \cv{} \tcode{T*} and \tcode{Ret}, respectively,
-when \tcode{pm} is a pointer to member function
-with cv-qualifier \cv{}
-and taking no arguments,
-where \tcode{Ret} is \tcode{pm}{'s} return type.
-
-\pnum
-The simple call wrapper
-returned from a call to \tcode{mem_fn(pm)}
-shall define three nested types
-named \tcode{first_argument_type}, \tcode{second_argument_type}, and \tcode{result_type}
-as synonyms for \cv{} \tcode{T*}, \tcode{T1}, and \tcode{Ret}, respectively,
-when \tcode{pm} is a pointer to member function
-with cv-qualifier \cv{}
-and taking one argument of type \tcode{T1},
-where \tcode{Ret} is \tcode{pm}{'s} return type.
-
-\pnum
-The following member names are defined in addition to names specified in Clause~\ref{containers}:
-
-\indexlibrary{\idxcode{first_argument_type}}%
-\indexlibrary{\idxcode{second_argument_type}}%
-\indexlibrary{\idxcode{result_type}}%
-\begin{codeblock}
-namespace std {
-  template <class Key, class T, class Compare, class Allocator>
-  class map<Key, T, Compare, Allocator>::value_compare {
-  public:
-    using result_type          = bool;
-    using first_argument_type  = value_type;
-    using second_argument_type = value_type;
-  };
-
-  template <class Key, class T, class Compare, class Allocator>
-  class multimap<Key, T, Compare, Allocator>::value_compare {
-  public:
-    using result_type          = bool;
-    using first_argument_type  = value_type;
-    using second_argument_type = value_type;
-  };
-}
-\end{codeblock}
-
-\rSec2[depr.negators]{Negators}
-
-\pnum
-The header \tcode{<functional>} has the following additional declarations:
-
-\begin{codeblock}
-namespace std {
-  template <class Predicate> class unary_negate;
-  template <class Predicate>
-    constexpr unary_negate<Predicate> not1(const Predicate&);
-  template <class Predicate> class binary_negate;
-  template <class Predicate>
-    constexpr binary_negate<Predicate> not2(const Predicate&);
-}
-\end{codeblock}
-
-\pnum
-Negators \tcode{not1} and \tcode{not2}
-take a unary and a binary predicate, respectively,
-and return their logical negations~(\ref{expr.unary.op}).
-
-\indexlibrary{\idxcode{unary_negate}}%
-\begin{codeblock}
-template <class Predicate>
-class unary_negate {
-public:
-  constexpr explicit unary_negate(const Predicate& pred);
-  constexpr bool operator()(const typename Predicate::argument_type& x) const;
-  using argument_type = typename Predicate::argument_type;
-  using result_type   = bool;
-};
-\end{codeblock}
-
-\indexlibrary{\idxcode{unary_negate}!\idxcode{operator()}}%
 \begin{itemdecl}
-constexpr bool operator()(const typename Predicate::argument_type& x) const;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum \returns \tcode{!pred(x)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{not1}}%
-\begin{itemdecl}
-template <class Predicate>
-   constexpr unary_negate<Predicate> not1(const Predicate& pred);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum \returns \tcode{unary_negate<Predicate>(pred)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{binary_negate}}%
-\begin{codeblock}
-template <class Predicate>
-class binary_negate {
-public:
-  constexpr explicit binary_negate(const Predicate& pred);
-  constexpr bool operator()(const typename Predicate::first_argument_type& x,
-                            const typename Predicate::second_argument_type& y) const;
-  using first_argument_type  = typename Predicate::first_argument_type;
-  using second_argument_type = typename Predicate::second_argument_type;
-  using result_type          = bool;
-
-};
-\end{codeblock}
-
-\indexlibrary{\idxcode{binary_negate}!\idxcode{operator()}}%
-\begin{itemdecl}
-constexpr bool operator()(const typename Predicate::first_argument_type& x,
-                          const typename Predicate::second_argument_type& y) const;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum \returns \tcode{!pred(x,y)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{not2}}%
-\begin{itemdecl}
-template <class Predicate>
-  constexpr binary_negate<Predicate> not2(const Predicate& pred);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum \returns \tcode{binary_negate<Predicate>(pred)}.
-\end{itemdescr}
-
-\rSec1[depr.default.allocator]{The default allocator}
-
-\pnum
-The following members and explicit class template specialization are defined in
-addition to those specified in \ref{default.allocator}:
-
-\indexlibrary{\idxcode{allocator}}%
-\begin{codeblock}
-namespace std {
-  // specialize for \tcode{void}:
-  template <> class allocator<void> {
-  public:
-    using value_type    = void;
-    using pointer       = void*;
-    using const_pointer = const void*;
-    // reference-to-\tcode{void} members are impossible.
-
-    template <class U> struct rebind { using other = allocator<U>; };
-  };
-
-  template <class T> class allocator {
-   public:
-    using size_type       = size_t;
-    using difference_type = ptrdiff_t;
-    using pointer         = T*;
-    using const_pointer   = const T*;
-    using reference       = T&;
-    using const_reference = const T&;
-    template <class U> struct rebind { using other = allocator<U>; };
-
-    T* address(T& x) const noexcept;
-    const T* address(const T& x) const noexcept;
-
-    T* allocate(size_t n, const void* hint);
-
-    template<class U, class... Args>
-      void construct(U* p, Args&&... args);
-    template <class U>
-      void destroy(U* p);
-
-    size_t max_size() const noexcept;
-  };
-}
-\end{codeblock}
-
-\indexlibrary{\idxcode{allocator}!\idxcode{address}}
-\indexlibrary{\idxcode{address}!\idxcode{allocator}}
-\begin{itemdecl}
-T* address(T& x) const noexcept;
-const T* address(const T& x) const noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-The actual address of the object referenced by \tcode{x}, even in the presence of an
-overloaded operator\&.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{allocator}!\idxcode{allocate}}
-\indexlibrary{\idxcode{allocate}!\idxcode{allocator}}
-\begin{itemdecl}
-T* allocate(size_t n, const void* hint);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-A pointer to the initial element of an array of storage of size \tcode{n}
-\tcode{* sizeof(T)}, aligned appropriately for objects of type \tcode{T}.
-It is \impldef{support for over-aligned types} whether over-aligned types are
-supported~(\ref{basic.align}).
-
-\pnum
-\remark
-the storage is obtained by calling \tcode{::operator new(std::size_t)}~(\ref{new.delete}),
-but it is unspecified when or how often this function is called.
-
-\pnum
-\throws
-\tcode{bad_alloc} if the storage cannot be obtained.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{allocator}!\idxcode{construct}}
-\indexlibrary{\idxcode{construct}!\idxcode{allocator}}
-\begin{itemdecl}
-template <class U, class... Args>
-  void construct(U* p, Args&&... args);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-As if by: \tcode{::new((void *)p) U(std::forward<Args>(args)...);}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{allocator}!\idxcode{destroy}}
-\indexlibrary{\idxcode{destroy}!\idxcode{allocator}}
-\begin{itemdecl}
-template <class U>
-  void destroy(U* p);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-As if by \tcode{p->\~{}U()}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{allocator}!\idxcode{max_size}}
-\indexlibrary{\idxcode{max_size}!\idxcode{allocator}}
-\begin{itemdecl}
-size_t max_size() const noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-The largest value \textit{N} for which the call \tcode{allocate(N, 0)}
-might succeed.
-\end{itemdescr}
-
-\rSec1[depr.storage.iterator]{Raw storage iterator}
-
-\pnum
-The header \tcode{<memory>} has the following addition:
-
-\indexlibrary{\idxcode{raw_storage_iterator}}%
-\begin{codeblock}
-namespace std {
-  template <class OutputIterator, class T>
-  class raw_storage_iterator {
-  public:
-    using iterator_category = output_iterator_tag;
-    using value_type        = void;
-    using difference_type   = void;
-    using pointer           = void;
-    using reference         = void;
-
-    explicit raw_storage_iterator(OutputIterator x);
-
-    raw_storage_iterator& operator*();
-    raw_storage_iterator& operator=(const T& element);
-    raw_storage_iterator& operator=(T&& element);
-    raw_storage_iterator& operator++();
-    raw_storage_iterator  operator++(int);
-    OutputIterator base() const;
-  };
-}
-\end{codeblock}
-
-\pnum
-\tcode{raw_storage_iterator} is provided to enable algorithms to store their
-results into uninitialized memory. The template parameter
-\tcode{OutputIterator} is required to have its \tcode{operator*} return an
-object for which \tcode{operator\&} is defined and returns a pointer to
-\tcode{T}, and is also required to satisfy the requirements of an output
-iterator~(\ref{output.iterators}).
-
-\indexlibrary{\idxcode{raw_storage_iterator}!constructor}%
-\begin{itemdecl}
-explicit raw_storage_iterator(OutputIterator x);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Initializes the iterator to point to the same value to which \tcode{x} points.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator*}}
-\indexlibrary{\idxcode{operator*}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-raw_storage_iterator& operator*();
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-\tcode{*this}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator=}}
-\indexlibrary{\idxcode{operator=}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-raw_storage_iterator& operator=(const T& element);
+template<class T> struct is_pod;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \requires
-\tcode{T} shall be \tcode{CopyConstructible}.
+\tcode{remove_all_extents_t<T>} shall be a complete type or \cv{} \tcode{void}.
 
 \pnum
-\effects
-Constructs a value from \tcode{element} at the location to which the iterator points.
+\tcode{is_pod<T>} is a \oldconcept{UnaryTypeTrait}\iref{meta.rqmts}
+with a base characteristic of \tcode{true_type}
+if \tcode{T} is a POD type,
+and \tcode{false_type} otherwise.
+\indextext{POD}%
+A POD class is a class that is both a trivial class and a standard-layout class,
+and has no non-static data members of type non-POD class (or array thereof).
+A POD type is a scalar type, a POD class, an array of such a type,
+or a cv-qualified version of one of these types.
 
 \pnum
-\returns
-A reference to the iterator.
+\begin{note}
+It is unspecified whether a closure type\iref{expr.prim.lambda.closure} is a POD type.
+\end{note}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator=}}
-\indexlibrary{\idxcode{operator=}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-raw_storage_iterator& operator=(T&& element);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{T} shall be \tcode{MoveConstructible}.
-
-\pnum
-\effects
-Constructs a value from \tcode{std::move(element)} at the location to which
-the iterator points.
-
-\pnum
-\returns
-A reference to the iterator.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator++}}
-\indexlibrary{\idxcode{operator++}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-raw_storage_iterator& operator++();
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Pre-increment:  advances the iterator and returns a reference to the updated iterator.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{operator++}}
-\indexlibrary{\idxcode{operator++}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-raw_storage_iterator operator++(int);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Post-increment:  advances the iterator and returns the old value of the iterator.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{raw_storage_iterator}!\idxcode{base}}
-\indexlibrary{\idxcode{base}!\idxcode{raw_storage_iterator}}
-\begin{itemdecl}
-OutputIterator base() const;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-An iterator of type \tcode{OutputIterator} that points to the same value as
-\tcode{*this} points to.
-\end{itemdescr}
-
-\rSec1[depr.temporary.buffer]{Temporary buffers}
-
-\pnum
-The header \tcode{<memory>} has the following additions:
-
-\begin{codeblock}
-namespace std {
-  template <class T>
-    pair<T*, ptrdiff_t> get_temporary_buffer(ptrdiff_t n) noexcept;
-  template <class T>
-    void return_temporary_buffer(T* p);
-}
-\end{codeblock}
-
-\indexlibrary{\idxcode{get_temporary_buffer}}%
-\begin{itemdecl}
-template <class T>
-  pair<T*, ptrdiff_t> get_temporary_buffer(ptrdiff_t n) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Obtains a pointer to uninitialized, contiguous storage for $N$ adjacent
-objects of type \tcode{T}, for some non-negative number $N$.
-It is \impldef{support for over-aligned types} whether over-aligned types are
-supported~(\ref{basic.align}).
-
-\pnum
-\remarks
-Calling \tcode{get_temporary_buffer} with a positive number \tcode{n} is
-a non-binding request to return storage for \tcode{n} objects of type \tcode{T}.
-In this case, an implementation is permitted to return instead storage for
-a non-negative number $N$ of such objects,
-where \tcode{$N$ != n} (including \tcode{$N$ == 0}).
-\begin{note} The request is non-binding to allow latitude for
-implementation-specific optimizations of its memory management. \end{note}
-
-\pnum
-\returns
-If \tcode{n <= 0} or if no storage could be obtained,
-returns a pair \tcode{P} such that
-\tcode{P.first} is a null pointer value and \tcode{P.second == 0};
-otherwise returns a pair \tcode{P} such that
-\tcode{P.first} refers to the address of the uninitialized storage and
-\tcode{P.second} refers to its capacity $N$ (in the units of \tcode{sizeof(T)}).
-\end{itemdescr}
-
-\indexlibrary{\idxcode{return_temporary_buffer}}%
-\begin{itemdecl}
-template <class T> void return_temporary_buffer(T* p);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Deallocates the storage referenced by \tcode{p}.
-
-\pnum
-\requires
-\tcode{p} shall be a pointer value returned by an earlier call to
-\tcode{get_temporary_buffer} that has not been invalidated by
-an intervening call to \tcode{return_temporary_buffer(T*)}.
-
-\pnum
-\throws
-Nothing.
-\end{itemdescr}
-
-\rSec1[depr.meta.types]{Deprecated Type Traits}
-
-\pnum
-The header \tcode{<type_traits>} has the following addition:
-
-\indexlibrary{\idxcode{is_literal_type}}%
-\begin{codeblock}
-namespace std {
-  template <class T> struct is_literal_type;
-
-  template <class T> constexpr bool is_literal_type_v = is_literal_type<T>::value;
-}
-\end{codeblock}
-
-\pnum
-\requires
-\tcode{remove_all_extents_t<T>} shall be a complete type or (possibly
-cv-qualified) \tcode{void}.
-
-\pnum
-\effects
-\tcode{is_literal_type} has a base-characteristic of \tcode{true_type} if
-\tcode{T} is a literal type~(\ref{basic.types}), and a base-characteristic of
-\tcode{false_type} otherwise.
-
-\rSec1[depr.iterator.primitives]{Deprecated Iterator primitives}
+\rSec1[depr.iterator.primitives]{Deprecated iterator primitives}
 
 \rSec2[depr.iterator.basic]{Basic iterator}
 
 \pnum
-The header \tcode{<iterator>} has the following addition:
+The header \libheaderrefx{iterator}{iterator.synopsis} has the following addition:
 
-\indexlibrary{\idxcode{iterator}}%
+\indexlibraryglobal{iterator}%
 \begin{codeblock}
 namespace std {
   template<class Category, class T, class Distance = ptrdiff_t,
-    class Pointer = T*, class Reference = T&>
+           class Pointer = T*, class Reference = T&>
   struct iterator {
     using iterator_category = Category;
     using value_type        = T;
@@ -2036,13 +1488,15 @@ template may be used as a base class to ease the definition of required types
 for new iterators.
 
 \pnum
-\begin{note} If the new iterator type is a class template, then these aliases
+\begin{note}
+If the new iterator type is a class template, then these aliases
 will not be visible from within the iterator class's template definition, but
-only to callers of that class.\end{note}
- 
+only to callers of that class.
+\end{note}
+
 \pnum
 \begin{example}
-If a \Cpp program wants to define a bidirectional iterator for some data
+If a \Cpp{} program wants to define a bidirectional iterator for some data
 structure containing \tcode{double} and such that it works on a large memory
 model of the implementation, it can do so with:
 
@@ -2053,3 +1507,1035 @@ class MyIterator :
 };
 \end{codeblock}
 \end{example}
+
+\rSec1[depr.move.iter.elem]{Deprecated \tcode{move_iterator} access}
+
+\pnum
+The following member is declared in addition to those members
+specified in \ref{move.iter.elem}:
+
+\begin{codeblock}
+namespace std {
+  template<class Iterator>
+  class move_iterator {
+  public:
+    constexpr pointer operator->() const;
+  };
+}
+\end{codeblock}
+
+\indexlibrarymember{operator->}{move_iterator}%
+\begin{itemdecl}
+constexpr pointer operator->() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{current}.
+\end{itemdescr}
+
+\rSec1[depr.util.smartptr.shared.atomic]{Deprecated \tcode{shared_ptr} atomic access}
+
+\pnum
+The header \libheaderref{memory} has the following additions:
+
+\indexlibraryglobal{shared_ptr}%
+\begin{codeblock}
+namespace std {
+  template<class T>
+    bool atomic_is_lock_free(const shared_ptr<T>* p);
+
+  template<class T>
+    shared_ptr<T> atomic_load(const shared_ptr<T>* p);
+  template<class T>
+    shared_ptr<T> atomic_load_explicit(const shared_ptr<T>* p, memory_order mo);
+
+  template<class T>
+    void atomic_store(shared_ptr<T>* p, shared_ptr<T> r);
+  template<class T>
+    void atomic_store_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+
+  template<class T>
+    shared_ptr<T> atomic_exchange(shared_ptr<T>* p, shared_ptr<T> r);
+  template<class T>
+    shared_ptr<T> atomic_exchange_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+
+  template<class T>
+    bool atomic_compare_exchange_weak(shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+  template<class T>
+    bool atomic_compare_exchange_strong(shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+  template<class T>
+    bool atomic_compare_exchange_weak_explicit(
+      shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w,
+      memory_order success, memory_order failure);
+  template<class T>
+    bool atomic_compare_exchange_strong_explicit(
+      shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w,
+      memory_order success, memory_order failure);
+}
+\end{codeblock}
+
+\pnum
+Concurrent access to a \tcode{shared_ptr} object from multiple threads does not
+introduce a data race if the access is done exclusively via the functions in
+this subclause and the instance is passed as their first argument.
+
+\pnum
+The meaning of the arguments of type \tcode{memory_order} is explained in~\ref{atomics.order}.
+
+\indexlibrarymember{atomic_is_lock_free}{shared_ptr}%
+\begin{itemdecl}
+template<class T> bool atomic_is_lock_free(const shared_ptr<T>* p);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\returns
+\tcode{true} if atomic access to \tcode{*p} is lock-free, \tcode{false} otherwise.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_load}{shared_ptr}%
+\begin{itemdecl}
+template<class T> shared_ptr<T> atomic_load(const shared_ptr<T>* p);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\returns
+\tcode{atomic_load_explicit(p, memory_order_seq_cst)}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_load_explicit}{shared_ptr}%
+\begin{itemdecl}
+template<class T> shared_ptr<T> atomic_load_explicit(const shared_ptr<T>* p, memory_order mo);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\requires \tcode{mo} shall not be \tcode{memory_order_release} or \tcode{memory_order_acq_rel}.
+
+\pnum
+\returns
+\tcode{*p}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_store}{shared_ptr}%
+\begin{itemdecl}
+template<class T> void atomic_store(shared_ptr<T>* p, shared_ptr<T> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\effects
+As if by \tcode{atomic_store_explicit(p, r, memory_order_seq_cst)}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_store_explicit}{shared_ptr}%
+\begin{itemdecl}
+template<class T> void atomic_store_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\requires \tcode{mo} shall not be \tcode{memory_order_acquire} or \tcode{memory_order_acq_rel}.
+
+\pnum
+\effects
+As if by \tcode{p->swap(r)}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_exchange}{shared_ptr}%
+\begin{itemdecl}
+template<class T> shared_ptr<T> atomic_exchange(shared_ptr<T>* p, shared_ptr<T> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\returns
+\tcode{atomic_exchange_explicit(p, r, memory_order_seq_cst)}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_exchange_explicit}{shared_ptr}%
+\begin{itemdecl}
+template<class T>
+  shared_ptr<T> atomic_exchange_explicit(shared_ptr<T>* p, shared_ptr<T> r, memory_order mo);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null.
+
+\pnum
+\effects
+As if by \tcode{p->swap(r)}.
+
+\pnum
+\returns
+The previous value of \tcode{*p}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_compare_exchange_weak}{shared_ptr}%
+\begin{itemdecl}
+template<class T>
+  bool atomic_compare_exchange_weak(shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null and \tcode{v} shall not be null.
+
+\pnum
+\returns
+\begin{codeblock}
+atomic_compare_exchange_weak_explicit(p, v, w, memory_order_seq_cst, memory_order_seq_cst)
+\end{codeblock}
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibrarymember{atomic_compare_exchange_strong}{shared_ptr}%
+\begin{itemdecl}
+template<class T>
+  bool atomic_compare_exchange_strong(shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\begin{codeblock}
+atomic_compare_exchange_strong_explicit(p, v, w, memory_order_seq_cst, memory_order_seq_cst)
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrarymember{atomic_compare_exchange_weak_explicit}{shared_ptr}%
+\indexlibrarymember{atomic_compare_exchange_strong_explicit}{shared_ptr}%
+\begin{itemdecl}
+template<class T>
+  bool atomic_compare_exchange_weak_explicit(
+    shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w,
+    memory_order success, memory_order failure);
+template<class T>
+  bool atomic_compare_exchange_strong_explicit(
+    shared_ptr<T>* p, shared_ptr<T>* v, shared_ptr<T> w,
+    memory_order success, memory_order failure);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{p} shall not be null and \tcode{v} shall not be null.
+The \tcode{failure} argument shall not be \tcode{memory_order_release} nor
+\tcode{memory_order_acq_rel}.
+
+\pnum
+\effects
+If \tcode{*p} is equivalent to \tcode{*v}, assigns \tcode{w} to
+\tcode{*p} and has synchronization semantics corresponding to the value of
+\tcode{success}, otherwise assigns \tcode{*p} to \tcode{*v} and has
+synchronization semantics corresponding to the value of \tcode{failure}.
+
+\pnum
+\returns
+\tcode{true} if \tcode{*p} was equivalent to \tcode{*v}, \tcode{false} otherwise.
+
+\pnum
+\throws
+Nothing.
+
+\pnum
+\remarks
+Two \tcode{shared_ptr} objects are equivalent if they store the same
+pointer value and share ownership.
+The weak form may fail spuriously. See~\ref{atomics.types.operations}.
+\end{itemdescr}
+
+\rSec1[depr.string.capacity]{Deprecated \tcode{basic_string} capacity}
+
+\pnum
+The following member is declared in addition to those members specified
+in \ref{string.capacity}:
+
+\indexlibraryglobal{basic_string}%
+\begin{codeblock}
+namespace std {
+  template<class charT, class traits = char_traits<charT>,
+           class Allocator = allocator<charT>>
+  class basic_string {
+  public:
+    void reserve();
+  };
+}
+\end{codeblock}
+
+\indexlibrarymember{reserve}{basic_string}%
+\begin{itemdecl}
+void reserve();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+After this call, \tcode{capacity()} has an unspecified value
+greater than or equal to \tcode{size()}.
+\begin{note}
+This is a non-binding shrink to fit request.
+\end{note}
+\end{itemdescr}
+
+\rSec1[depr.locale.stdcvt]{Deprecated standard code conversion facets}
+
+\pnum
+The header \libheaderdef{codecvt} provides
+code conversion facets for various character encodings.
+
+\rSec2[depr.codecvt.syn]{Header \tcode{<codecvt>} synopsis}
+
+\indexlibraryglobal{codecvt_mode}%
+\indexlibraryglobal{codecvt_utf8}%
+\indexlibraryglobal{codecvt_utf16}%
+\indexlibraryglobal{codecvt_utf8_utf16}%
+\begin{codeblock}
+namespace std {
+  enum codecvt_mode {
+    consume_header = 4,
+    generate_header = 2,
+    little_endian = 1
+  };
+
+  template<class Elem, unsigned long Maxcode = 0x10ffff, codecvt_mode Mode = (codecvt_mode)0>
+    class codecvt_utf8 : public codecvt<Elem, char, mbstate_t> {
+    public:
+      explicit codecvt_utf8(size_t refs = 0);
+      ~codecvt_utf8();
+    };
+
+  template<class Elem, unsigned long Maxcode = 0x10ffff, codecvt_mode Mode = (codecvt_mode)0>
+    class codecvt_utf16 : public codecvt<Elem, char, mbstate_t> {
+    public:
+      explicit codecvt_utf16(size_t refs = 0);
+      ~codecvt_utf16();
+    };
+
+  template<class Elem, unsigned long Maxcode = 0x10ffff, codecvt_mode Mode = (codecvt_mode)0>
+    class codecvt_utf8_utf16 : public codecvt<Elem, char, mbstate_t> {
+    public:
+      explicit codecvt_utf8_utf16(size_t refs = 0);
+      ~codecvt_utf8_utf16();
+    };
+}
+\end{codeblock}
+
+\rSec2[depr.locale.stdcvt.req]{Requirements}
+
+\pnum
+For each of the three code conversion facets \tcode{codecvt_utf8},
+\tcode{codecvt_utf16}, and \tcode{codecvt_utf8_utf16}:
+\begin{itemize}
+\item
+  \tcode{Elem} is the wide-character type, such as
+  \tcode{wchar_t}, \tcode{char16_t}, or \tcode{char32_t}.
+\item
+  \tcode{Maxcode} is the largest wide-character code that the facet
+  will read or write without reporting a conversion error.
+\item
+  If \tcode{(Mode \& consume_header)}, the facet shall consume an
+  initial header sequence, if present, when reading a multibyte sequence
+  to determine the endianness of the subsequent multibyte sequence to be read.
+\item
+  If \tcode{(Mode \& generate_header)}, the facet shall generate an
+  initial header sequence when writing a multibyte sequence to advertise
+  the endianness of the subsequent multibyte sequence to be written.
+\item
+  If \tcode{(Mode \& little_endian)}, the facet shall generate a
+  multibyte sequence in little-endian order,
+  as opposed to the default big-endian order.
+\end{itemize}
+
+\pnum
+For the facet \tcode{codecvt_utf8}\indexlibraryglobal{codecvt_utf8}:
+\begin{itemize}
+\item
+  The facet shall convert between UTF-8 multibyte sequences
+  and UCS-2 or UTF-32 (depending on the size of \tcode{Elem})
+  within the program.
+\item
+  Endianness shall not affect how multibyte sequences are read or written.
+\item
+  The multibyte sequences may be written as either a text or a binary file.
+\end{itemize}
+
+\pnum
+For the facet \tcode{codecvt_utf16}\indexlibraryglobal{codecvt_utf16}:
+\begin{itemize}
+\item
+  The facet shall convert between UTF-16 multibyte sequences
+  and UCS-2 or UTF-32 (depending on the size of \tcode{Elem})
+  within the program.
+\item
+  Multibyte sequences shall be read or written
+  according to the \tcode{Mode} flag, as set out above.
+\item
+  The multibyte sequences may be written only as a binary file.
+  Attempting to write to a text file produces undefined behavior.
+\end{itemize}
+
+\pnum
+For the facet \tcode{codecvt_utf8_utf16}\indexlibraryglobal{codecvt_utf8_utf16}:
+\begin{itemize}
+\item
+  The facet shall convert between UTF-8 multibyte sequences
+  and UTF-16 (one or two 16-bit codes) within the program.
+\item
+  Endianness shall not affect how multibyte sequences are read or written.
+\item
+  The multibyte sequences may be written as either a text or a binary file.
+\end{itemize}
+
+\pnum
+The encoding forms UTF-8, UTF-16, and UTF-32 are specified in ISO/IEC 10646.
+The encoding form UCS-2 is specified in ISO/IEC 10646-1:1993.
+
+\rSec1[depr.conversions]{Deprecated convenience conversion interfaces}
+
+\pnum
+The header \libheaderref{locale} has the following additions:
+
+\begin{codeblock}
+namespace std {
+  template<class Codecvt, class Elem = wchar_t,
+           class Wide_alloc = allocator<Elem>,
+           class Byte_alloc = allocator<char>>
+    class wstring_convert;
+
+  template<class Codecvt, class Elem = wchar_t,
+           class Tr = char_traits<Elem>>
+    class wbuffer_convert;
+}
+\end{codeblock}
+
+\rSec2[depr.conversions.string]{Class template \tcode{wstring_convert}}
+
+\pnum
+Class template \tcode{wstring_convert} performs conversions between a wide
+string and a byte string. It lets you specify a code conversion facet
+(like class template \tcode{codecvt}) to perform the conversions, without
+affecting any streams or locales.
+\begin{example}
+If you want to use the code
+conversion facet \tcode{codecvt_utf8} to output to \tcode{cout} a UTF-8
+multibyte sequence corresponding to a wide string, but you don't want to
+alter the locale for \tcode{cout}, you can write something like:
+\begin{codeblock}
+wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+std::string mbstring = myconv.to_bytes(L"Hello\n");
+std::cout << mbstring;
+\end{codeblock}
+\end{example}
+
+\indexlibraryglobal{wstring_convert}%
+\begin{codeblock}
+namespace std {
+  template<class Codecvt, class Elem = wchar_t,
+           class Wide_alloc = allocator<Elem>,
+           class Byte_alloc = allocator<char>>
+    class wstring_convert {
+    public:
+      using byte_string = basic_string<char, char_traits<char>, Byte_alloc>;
+      using wide_string = basic_string<Elem, char_traits<Elem>, Wide_alloc>;
+      using state_type  = typename Codecvt::state_type;
+      using int_type    = typename wide_string::traits_type::int_type;
+
+      wstring_convert() : wstring_convert(new Codecvt) {}
+      explicit wstring_convert(Codecvt* pcvt);
+      wstring_convert(Codecvt* pcvt, state_type state);
+      explicit wstring_convert(const byte_string& byte_err,
+                               const wide_string& wide_err = wide_string());
+      ~wstring_convert();
+
+      wstring_convert(const wstring_convert&) = delete;
+      wstring_convert& operator=(const wstring_convert&) = delete;
+
+      wide_string from_bytes(char byte);
+      wide_string from_bytes(const char* ptr);
+      wide_string from_bytes(const byte_string& str);
+      wide_string from_bytes(const char* first, const char* last);
+
+      byte_string to_bytes(Elem wchar);
+      byte_string to_bytes(const Elem* wptr);
+      byte_string to_bytes(const wide_string& wstr);
+      byte_string to_bytes(const Elem* first, const Elem* last);
+
+      size_t converted() const noexcept;
+      state_type state() const;
+
+    private:
+      byte_string byte_err_string;  // \expos
+      wide_string wide_err_string;  // \expos
+      Codecvt* cvtptr;              // \expos
+      state_type cvtstate;          // \expos
+      size_t cvtcount;              // \expos
+    };
+}
+\end{codeblock}
+
+\pnum
+The class template describes an object that controls conversions between wide
+string objects of class \tcode{basic_string<Elem, char_traits<Elem>,
+Wide_alloc>} and byte string objects of class \tcode{basic_string<char,
+char_traits<char>, Byte_alloc>}. The class template defines the types
+\tcode{wide_string} and \tcode{byte_string} as synonyms for these two types.
+Conversion between a sequence of \tcode{Elem} values (stored in a
+\tcode{wide_string} object) and multibyte sequences (stored in a
+\tcode{byte_string} object) is performed by an object of class
+\tcode{Codecvt}, which meets the
+requirements of the standard code-conversion facet \tcode{codecvt<Elem,
+char, mbstate_t>}.
+
+\pnum
+An object of this class template stores:
+
+\begin{itemize}
+\item \tcode{byte_err_string} --- a byte string to display on errors
+\item \tcode{wide_err_string} --- a wide string to display on errors
+\item \tcode{cvtptr} --- a pointer to the allocated conversion object
+(which is freed when the \tcode{wstring_convert} object is destroyed)
+\item \tcode{cvtstate} --- a conversion state object
+\item \tcode{cvtcount} --- a conversion count
+\end{itemize}
+
+\indexlibrarymember{byte_string}{wstring_convert}%
+\begin{itemdecl}
+using byte_string = basic_string<char, char_traits<char>, Byte_alloc>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The type shall be a synonym for \tcode{basic_string<char, char_traits<char>, Byte_alloc>}.
+\end{itemdescr}
+
+\indexlibrarymember{converted}{wstring_convert}%
+\begin{itemdecl}
+size_t converted() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{cvtcount}.
+\end{itemdescr}
+
+\indexlibrarymember{from_bytes}{wstring_convert}%
+\begin{itemdecl}
+wide_string from_bytes(char byte);
+wide_string from_bytes(const char* ptr);
+wide_string from_bytes(const byte_string& str);
+wide_string from_bytes(const char* first, const char* last);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+The first member function shall convert the single-element sequence \tcode{byte} to a
+wide string. The second member function shall convert the null-terminated
+sequence beginning at \tcode{ptr} to a wide string. The third member function
+shall convert the sequence stored in \tcode{str} to a wide string. The fourth member
+function shall convert the sequence defined by the range \range{first}{last} to a
+wide string.
+
+\pnum
+In all cases:
+
+\begin{itemize}
+\item If the \tcode{cvtstate} object was not constructed with an explicit value, it
+shall be set to its default value (the initial conversion state) before the
+conversion begins. Otherwise it shall be left unchanged.
+
+\item The number of input elements successfully converted shall be stored in \tcode{cvtcount}.
+\end{itemize}
+
+\pnum
+\returns
+If no conversion error occurs, the member function shall return the converted wide string.
+Otherwise, if the object was constructed with a wide-error string, the
+member function shall return the wide-error string.
+Otherwise, the member function throws an object of class \tcode{range_error}.
+\end{itemdescr}
+
+\indexlibrarymember{int_type}{wstring_convert}%
+\begin{itemdecl}
+using int_type = typename wide_string::traits_type::int_type;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The type shall be a synonym for \tcode{wide_string::traits_type::int_type}.
+\end{itemdescr}
+
+\indexlibrarymember{state}{wstring_convert}%
+\begin{itemdecl}
+state_type state() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+returns \tcode{cvtstate}.
+\end{itemdescr}
+
+\indexlibrarymember{state_type}{wstring_convert}%
+\begin{itemdecl}
+using state_type = typename Codecvt::state_type;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The type shall be a synonym for \tcode{Codecvt::state_type}.
+\end{itemdescr}
+
+\indexlibrarymember{to_bytes}{wstring_convert}%
+\begin{itemdecl}
+byte_string to_bytes(Elem wchar);
+byte_string to_bytes(const Elem* wptr);
+byte_string to_bytes(const wide_string& wstr);
+byte_string to_bytes(const Elem* first, const Elem* last);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+The first member function shall convert the single-element sequence \tcode{wchar} to a byte string.
+The second member function shall convert the null-terminated sequence beginning at \tcode{wptr} to
+a byte string. The third member function shall convert the sequence stored in \tcode{wstr} to a
+byte string. The fourth member function shall convert the sequence defined by the
+range \range{first}{last} to a byte string.
+
+\pnum
+In all cases:
+
+\begin{itemize}
+\item If the \tcode{cvtstate} object was not constructed with an explicit value, it
+shall be
+set to its default value (the initial conversion state) before the
+conversion begins. Otherwise it shall be left unchanged.
+\item The number of input elements successfully converted shall be stored
+in \tcode{cvtcount}.
+\end{itemize}
+
+\pnum
+\returns
+If no conversion error occurs, the member function shall return the converted byte string.
+Otherwise, if the object was constructed with a byte-error string, the
+member function shall return the byte-error string.
+Otherwise, the member function shall throw an object of class \tcode{range_error}.
+\end{itemdescr}
+
+\indexlibrarymember{wide_string}{wstring_convert}%
+\begin{itemdecl}
+using wide_string = basic_string<Elem, char_traits<Elem>, Wide_alloc>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The type shall be a synonym for \tcode{basic_string<Elem,
+char_traits<Elem>, Wide_alloc>}.
+\end{itemdescr}
+
+\indexlibraryctor{wstring_convert}%
+\begin{itemdecl}
+explicit wstring_convert(Codecvt* pcvt);
+wstring_convert(Codecvt* pcvt, state_type state);
+explicit wstring_convert(const byte_string& byte_err,
+    const wide_string& wide_err = wide_string());
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+For the first and second constructors, \tcode{pcvt != nullptr}.
+
+\pnum
+\effects
+The first constructor shall store \tcode{pcvt} in \tcode{cvtptr} and
+default values in \tcode{cvtstate}, \tcode{byte_err_string}, and
+\tcode{wide_err_string}.
+The second constructor shall store \tcode{pcvt} in \tcode{cvtptr},
+\tcode{state} in \tcode{cvtstate}, and default values in
+\tcode{byte_err_string} and \tcode{wide_err_string}; moreover the
+stored state shall be retained between calls to \tcode{from_bytes} and
+\tcode{to_bytes}.
+The third constructor shall store \tcode{new Codecvt} in \tcode{cvtptr},
+\tcode{state_type()} in \tcode{cvtstate}, \tcode{byte_err}
+in \tcode{byte_err_string}, and \tcode{wide_err} in
+\tcode{wide_err_string}.
+\end{itemdescr}
+
+\indexlibrarydtor{wstring_convert}%
+\begin{itemdecl}
+~wstring_convert();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+The destructor shall delete \tcode{cvtptr}.
+\end{itemdescr}
+
+\rSec2[depr.conversions.buffer]{Class template \tcode{wbuffer_convert}}
+
+\pnum
+Class template \tcode{wbuffer_convert} looks like a wide stream buffer, but
+performs all its I/O through an underlying byte stream buffer that you
+specify when you construct it. Like class template \tcode{wstring_convert}, it
+lets you specify a code conversion facet to perform the conversions,
+without affecting any streams or locales.
+
+\indexlibraryglobal{wbuffer_convert}%
+\begin{codeblock}
+namespace std {
+  template<class Codecvt, class Elem = wchar_t, class Tr = char_traits<Elem>>
+    class wbuffer_convert : public basic_streambuf<Elem, Tr> {
+    public:
+      using state_type = typename Codecvt::state_type;
+
+      wbuffer_convert() : wbuffer_convert(nullptr) {}
+      explicit wbuffer_convert(streambuf* bytebuf,
+                               Codecvt* pcvt = new Codecvt,
+                               state_type state = state_type());
+
+      ~wbuffer_convert();
+
+      wbuffer_convert(const wbuffer_convert&) = delete;
+      wbuffer_convert& operator=(const wbuffer_convert&) = delete;
+
+      streambuf* rdbuf() const;
+      streambuf* rdbuf(streambuf* bytebuf);
+
+      state_type state() const;
+
+    private:
+      streambuf* bufptr;            // \expos
+      Codecvt* cvtptr;              // \expos
+      state_type cvtstate;          // \expos
+  };
+}
+\end{codeblock}
+
+\pnum
+The class template describes a stream buffer that controls the
+transmission of elements of type \tcode{Elem}, whose character traits are
+described by the class \tcode{Tr}, to and from a byte stream buffer of type
+\tcode{streambuf}. Conversion between a sequence of \tcode{Elem} values and
+multibyte sequences is performed by an object of class
+\tcode{Codecvt}, which shall meet the requirements
+of the standard code-conversion facet \tcode{codecvt<Elem, char, mbstate_t>}.
+
+\pnum
+An object of this class template stores:
+
+\begin{itemize}
+\item \tcode{bufptr} --- a pointer to its underlying byte stream buffer
+\item \tcode{cvtptr} --- a pointer to the allocated conversion object
+(which is freed when the \tcode{wbuffer_convert} object is destroyed)
+\item \tcode{cvtstate} --- a conversion state object
+\end{itemize}
+
+\indexlibrarymember{state}{wbuffer_convert}%
+\begin{itemdecl}
+state_type state() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{cvtstate}.
+\end{itemdescr}
+
+\indexlibrarymember{rdbuf}{wbuffer_convert}%
+\begin{itemdecl}
+streambuf* rdbuf() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{bufptr}.
+\end{itemdescr}
+
+\indexlibrarymember{rdbuf}{wbuffer_convert}%
+\begin{itemdecl}
+streambuf* rdbuf(streambuf* bytebuf);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Stores \tcode{bytebuf} in \tcode{bufptr}.
+
+\pnum
+\returns
+The previous value of \tcode{bufptr}.
+\end{itemdescr}
+
+\indexlibrarymember{state_type}{wbuffer_convert}%
+\begin{itemdecl}
+using state_type = typename Codecvt::state_type;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The type shall be a synonym for \tcode{Codecvt::state_type}.
+\end{itemdescr}
+
+\indexlibraryctor{wbuffer_convert}%
+\begin{itemdecl}
+explicit wbuffer_convert(
+    streambuf* bytebuf,
+    Codecvt* pcvt = new Codecvt,
+    state_type state = state_type());
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{pcvt != nullptr}.
+
+\pnum
+\effects
+The constructor constructs a stream buffer object, initializes
+\tcode{bufptr} to \tcode{bytebuf}, initializes \tcode{cvtptr}
+to \tcode{pcvt}, and initializes \tcode{cvtstate} to \tcode{state}.
+\end{itemdescr}
+
+\indexlibrarydtor{wbuffer_convert}%
+\begin{itemdecl}
+~wbuffer_convert();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+The destructor shall delete \tcode{cvtptr}.
+\end{itemdescr}
+
+\rSec1[depr.locale.category]{Deprecated locale category facets}
+
+\pnum
+The \tcode{ctype} locale category includes the following facets
+as if they were specified
+in table \tref{locale.category.facets} of \ref{locale.category}.
+
+\begin{codeblock}
+codecvt<char16_t, char, mbstate_t>
+codecvt<char32_t, char, mbstate_t>
+\end{codeblock}
+
+\pnum
+The \tcode{ctype} locale category includes the following facets
+as if they were specified
+in table \tref{locale.spec} of \ref{locale.category}.
+
+\begin{codeblock}
+codecvt_byname<char16_t, char, mbstate_t>
+codecvt_byname<char32_t, char, mbstate_t>
+\end{codeblock}
+
+\pnum
+The following class template specializations are required
+in addition to those specified in~\ref{locale.codecvt}.
+The specialization \tcode{codecvt<char16_t, char, mbstate_t>}
+converts between the UTF-16 and UTF-8 encoding forms, and
+the specialization \tcode{codecvt<char32_t, char, mbstate_t>}
+converts between the UTF-32 and UTF-8 encoding forms.
+
+\rSec1[depr.fs.path.factory]{Deprecated filesystem path factory functions}
+
+\indexlibraryglobal{u8path}%
+\begin{itemdecl}
+template<class Source>
+  path u8path(const Source& source);
+template<class InputIterator>
+  path u8path(InputIterator first, InputIterator last);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires The \tcode{source} and \range{first}{last}
+  sequences are UTF-8 encoded. The value type of \tcode{Source}
+  and \tcode{InputIterator} is \tcode{char} or \tcode{char8_t}.
+  \tcode{Source} meets the requirements specified in \ref{fs.path.req}.
+
+\pnum
+\returns
+\begin{itemize}
+\item If \tcode{value_type} is \tcode{char} and the current native
+      narrow encoding\iref{fs.path.type.cvt} is UTF-8,
+      return \tcode{path(source)} or \tcode{path(first, last)};
+      otherwise,
+\item if \tcode{value_type} is \tcode{wchar_t} and the
+      native wide encoding is UTF-16, or
+      if \tcode{value_type} is \tcode{char16_t} or \tcode{char32_t},
+      convert \tcode{source} or \range{first}{last}
+      to a temporary, \tcode{tmp}, of type \tcode{string_type} and
+      return \tcode{path(tmp)};
+      otherwise,
+\item convert \tcode{source} or \range{first}{last}
+      to a temporary, \tcode{tmp}, of type \tcode{u32string} and
+      return \tcode{path(tmp)}.
+\end{itemize}
+
+\pnum
+\remarks
+Argument format conversion\iref{fs.path.fmt.cvt} applies to the
+  arguments for these functions. How Unicode encoding conversions are performed is
+  unspecified.
+
+\pnum
+\begin{example}
+A string is to be read from a database that is encoded in UTF-8, and used
+    to create a directory using the native encoding for filenames:
+\begin{codeblock}
+namespace fs = std::filesystem;
+std::string utf8_string = read_utf8_data();
+fs::create_directory(fs::u8path(utf8_string));
+\end{codeblock}
+
+For POSIX-based operating systems with the native narrow encoding set
+    to UTF-8, no encoding or type conversion occurs.
+
+For POSIX-based operating systems with the native narrow encoding not
+    set to UTF-8, a conversion to UTF-32 occurs, followed by a conversion to the
+    current native narrow encoding. Some Unicode characters may have no native character
+    set representation.
+
+For Windows-based operating systems a conversion from UTF-8 to
+    UTF-16 occurs.
+\end{example}
+\end{itemdescr}
+
+\rSec1[depr.atomics]{Deprecated atomic initialization}
+
+\pnum
+The header \libheaderref{atomics} has the following additions.
+
+\begin{codeblock}
+namespace std {
+  template<class T>
+    void atomic_init(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    void atomic_init(atomic<T>*, typename atomic<T>::value_type) noexcept;
+
+  #define ATOMIC_VAR_INIT(value) @\seebelow@
+
+  #define ATOMIC_FLAG_INIT @\seebelow@
+}
+\end{codeblock}
+
+\rSec2[depr.atomics.nonmembers]{Non-member functions}
+
+\indexlibraryglobal{atomic_init}%
+\begin{itemdecl}
+template<class T>
+  void atomic_init(volatile atomic<T>* object, typename atomic<T>::value_type desired) noexcept;
+template<class T>
+  void atomic_init(atomic<T>* object, typename atomic<T>::value_type desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{atomic_store_explicit(object, desired, memory_order_relaxed);}
+\end{itemdescr}
+
+\rSec2[depr.atomics.types.operations]{Operations on atomic types}
+
+\indexlibraryglobal{ATOMIC_VAR_INIT}%
+\begin{itemdecl}
+#define ATOMIC_VAR_INIT(value) @\seebelow@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The macro expands to a token sequence suitable for constant initialization of
+an atomic variable of static storage duration of a type that
+is initialization-compatible with \tcode{value}.
+\begin{note}
+This operation may need to initialize locks.
+\end{note}
+Concurrent access to the variable being initialized,
+even via an atomic operation,
+constitutes a data race.
+\begin{example}
+\begin{codeblock}
+atomic<int> v = ATOMIC_VAR_INIT(5);
+\end{codeblock}
+\end{example}
+\end{itemdescr}
+
+\rSec2[depr.atomics.flag]{Flag type and operations}
+
+\indexlibraryglobal{ATOMIC_FLAG_INIT}%
+\begin{itemdecl}
+#define ATOMIC_FLAG_INIT @\seebelow@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks
+The macro \tcode{ATOMIC_FLAG_INIT} is defined in such a way that
+it can be used to initialize an object of type \tcode{atomic_flag}
+to the clear state.
+The macro can be used in the form:
+\begin{codeblock}
+atomic_flag guard = ATOMIC_FLAG_INIT;
+\end{codeblock}
+It is unspecified whether the macro can be used
+in other initialization contexts.
+For a complete static-duration object, that initialization shall be static.
+\end{itemdescr}

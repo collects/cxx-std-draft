@@ -9,36 +9,34 @@ provided via operations on atomic objects.
 
 \pnum
 The following subclauses describe atomics requirements and components for types
-and operations, as summarized below.
+and operations, as summarized in \tref{atomics.summary}.
 
-\begin{libsumtab}{Atomics library summary}{tab:atomics.lib.summary}
-\ref{atomics.order} & Order and Consistency   &
-  \\
-\ref{atomics.lockfree}  & Lock-free Property   &
-  \\
-\ref{atomics.types.generic} & Atomic Types   & \tcode{<atomic>}
-  \\
-\ref{atomics.types.operations}  & Operations on Atomic Types &
-  \\
-\ref{atomics.flag}  & Flag Type and Operations   &
-  \\
-\ref{atomics.fences}  & Fences   &
-  \\
+\begin{libsumtab}{Atomics library summary}{atomics.summary}
+\ref{atomics.alias} & Type aliases  & \tcode{<atomic>} \\
+\ref{atomics.order} & Order and consistency   &  \\
+\ref{atomics.lockfree}  & Lock-free property   &  \\
+\ref{atomics.wait}  & Waiting and notifying  &  \\
+\ref{atomics.ref.generic} & Class template \tcode{atomic_ref} &  \\
+\ref{atomics.types.generic} & Class template \tcode{atomic}   &  \\
+\ref{atomics.nonmembers}  & Non-member functions &  \\
+\ref{atomics.flag}  & Flag type and operations   &  \\
+\ref{atomics.fences}  & Fences   &  \\
 \end{libsumtab}
 
 \rSec1[atomics.syn]{Header \tcode{<atomic>} synopsis}
 
-\indexlibrary{\idxhdr{atomic}}%
+\indexheader{atomic}%
 \begin{codeblock}
 namespace std {
   // \ref{atomics.order}, order and consistency
-  enum memory_order;
-  template <class T>
+  enum class memory_order : @\unspec@;
+  template<class T>
     T kill_dependency(T y) noexcept;
 
   // \ref{atomics.lockfree}, lock-free property
   #define ATOMIC_BOOL_LOCK_FREE @\unspec@
   #define ATOMIC_CHAR_LOCK_FREE @\unspec@
+  #define ATOMIC_CHAR8_T_LOCK_FREE @\unspec@
   #define ATOMIC_CHAR16_T_LOCK_FREE @\unspec@
   #define ATOMIC_CHAR32_T_LOCK_FREE @\unspec@
   #define ATOMIC_WCHAR_T_LOCK_FREE @\unspec@
@@ -48,140 +46,218 @@ namespace std {
   #define ATOMIC_LLONG_LOCK_FREE @\unspec@
   #define ATOMIC_POINTER_LOCK_FREE @\unspec@
 
-  // \ref{atomics.types.generic}, generic types
+  // \ref{atomics.ref.generic}, class template \tcode{atomic_ref}
+  template<class T> struct atomic_ref;
+  // \ref{atomics.ref.pointer}, partial specialization for pointers
+  template<class T> struct atomic_ref<T*>;
+
+  // \ref{atomics.types.generic}, class template \tcode{atomic}
   template<class T> struct atomic;
-  template<> struct atomic<@\textit{integral}@>;
+  // \ref{atomics.types.pointer}, partial specialization for pointers
   template<class T> struct atomic<T*>;
 
-  // \ref{atomics.types.operations.general}, general operations on atomic types
-  //  In the following declarations, \textit{atomic-type} is either
-  //  \tcode{atomic<T>} or a named base class for \tcode{T} from
-  //  Table~\ref{tab:atomics.integral} or inferred from Table~\ref{tab:atomics.typedefs} or from \tcode{bool}.
-  // If it is \tcode{atomic<T>}, then the declaration is a template
-  // declaration prefixed with \tcode{template <class T>}.
-  bool atomic_is_lock_free(const volatile @\textit{atomic-type}@*) noexcept;
-  bool atomic_is_lock_free(const @\textit{atomic-type}@*) noexcept;
-  void atomic_init(volatile @\textit{atomic-type}@*, T) noexcept;
-  void atomic_init(@\textit{atomic-type}@*, T) noexcept;
-  void atomic_store(volatile @\textit{atomic-type}@*, T) noexcept;
-  void atomic_store(@\textit{atomic-type}@*, T) noexcept;
-  void atomic_store_explicit(volatile @\textit{atomic-type}@*, T, memory_order) noexcept;
-  void atomic_store_explicit(@\textit{atomic-type}@*, T, memory_order) noexcept;
-  T atomic_load(const volatile @\textit{atomic-type}@*) noexcept;
-  T atomic_load(const @\textit{atomic-type}@*) noexcept;
-  T atomic_load_explicit(const volatile @\textit{atomic-type}@*, memory_order) noexcept;
-  T atomic_load_explicit(const @\textit{atomic-type}@*, memory_order) noexcept;
-  T atomic_exchange(volatile @\textit{atomic-type}@*, T) noexcept;
-  T atomic_exchange(@\textit{atomic-type}@*, T) noexcept;
-  T atomic_exchange_explicit(volatile @\textit{atomic-type}@*, T, memory_order) noexcept;
-  T atomic_exchange_explicit(@\textit{atomic-type}@*, T, memory_order) noexcept;
-  bool atomic_compare_exchange_weak(volatile @\textit{atomic-type}@*, T*, T) noexcept;
-  bool atomic_compare_exchange_weak(@\textit{atomic-type}@*, T*, T) noexcept;
-  bool atomic_compare_exchange_strong(volatile @\textit{atomic-type}@*, T*, T) noexcept;
-  bool atomic_compare_exchange_strong(@\textit{atomic-type}@*, T*, T) noexcept;
-  bool atomic_compare_exchange_weak_explicit(volatile @\textit{atomic-type}@*, T*, T, 
-    memory_order, memory_order) noexcept;
-  bool atomic_compare_exchange_weak_explicit(@\textit{atomic-type}@*, T*, T,
-    memory_order, memory_order) noexcept;
-  bool atomic_compare_exchange_strong_explicit(volatile @\textit{atomic-type}@*, T*, T,
-    memory_order, memory_order) noexcept;
-  bool atomic_compare_exchange_strong_explicit(@\textit{atomic-type}@*, T*, T,
-    memory_order, memory_order) noexcept;
+  // \ref{atomics.nonmembers}, non-member functions
+  template<class T>
+    bool atomic_is_lock_free(const volatile atomic<T>*) noexcept;
+  template<class T>
+    bool atomic_is_lock_free(const atomic<T>*) noexcept;
+  template<class T>
+    void atomic_store(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    void atomic_store(atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    void atomic_store_explicit(volatile atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    void atomic_store_explicit(atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    T atomic_load(const volatile atomic<T>*) noexcept;
+  template<class T>
+    T atomic_load(const atomic<T>*) noexcept;
+  template<class T>
+    T atomic_load_explicit(const volatile atomic<T>*, memory_order) noexcept;
+  template<class T>
+    T atomic_load_explicit(const atomic<T>*, memory_order) noexcept;
+  template<class T>
+    T atomic_exchange(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_exchange(atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_exchange_explicit(volatile atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    T atomic_exchange_explicit(atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_weak(volatile atomic<T>*,
+                                      typename atomic<T>::value_type*,
+                                      typename atomic<T>::value_type) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_weak(atomic<T>*,
+                                      typename atomic<T>::value_type*,
+                                      typename atomic<T>::value_type) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_strong(volatile atomic<T>*,
+                                        typename atomic<T>::value_type*,
+                                        typename atomic<T>::value_type) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_strong(atomic<T>*,
+                                        typename atomic<T>::value_type*,
+                                        typename atomic<T>::value_type) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_weak_explicit(volatile atomic<T>*,
+                                               typename atomic<T>::value_type*,
+                                               typename atomic<T>::value_type,
+                                               memory_order, memory_order) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_weak_explicit(atomic<T>*,
+                                               typename atomic<T>::value_type*,
+                                               typename atomic<T>::value_type,
+                                               memory_order, memory_order) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_strong_explicit(volatile atomic<T>*,
+                                                 typename atomic<T>::value_type*,
+                                                 typename atomic<T>::value_type,
+                                                 memory_order, memory_order) noexcept;
+  template<class T>
+    bool atomic_compare_exchange_strong_explicit(atomic<T>*,
+                                                 typename atomic<T>::value_type*,
+                                                 typename atomic<T>::value_type,
+                                                 memory_order, memory_order) noexcept;
 
-  // \ref{atomics.types.operations.templ}, templated operations on atomic types
-  template <class T>
-    T atomic_fetch_add(volatile @atomic<T>@*, T) noexcept;
-  template <class T>
-    T atomic_fetch_add(@atomic<T>@*, T) noexcept;
-  template <class T>
-    T atomic_fetch_add_explicit(volatile atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_add_explicit(atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_sub(volatile atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_sub(atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_sub_explicit(volatile atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_sub_explicit(atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_and(volatile atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_and(atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_and_explicit(volatile atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_and_explicit(atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_or(volatile atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_or(atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_or_explicit(volatile atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_or_explicit(atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_xor(volatile atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_xor(atomic<T>*, T) noexcept;
-  template <class T>
-    T atomic_fetch_xor_explicit(volatile atomic<T>*, T, memory_order) noexcept;
-  template <class T>
-    T atomic_fetch_xor_explicit(atomic<T>*, T, memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_add(volatile atomic<T>*, typename atomic<T>::difference_type) noexcept;
+  template<class T>
+    T atomic_fetch_add(atomic<T>*, typename atomic<T>::difference_type) noexcept;
+  template<class T>
+    T atomic_fetch_add_explicit(volatile atomic<T>*, typename atomic<T>::difference_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_add_explicit(atomic<T>*, typename atomic<T>::difference_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_sub(volatile atomic<T>*, typename atomic<T>::difference_type) noexcept;
+  template<class T>
+    T atomic_fetch_sub(atomic<T>*, typename atomic<T>::difference_type) noexcept;
+  template<class T>
+    T atomic_fetch_sub_explicit(volatile atomic<T>*, typename atomic<T>::difference_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_sub_explicit(atomic<T>*, typename atomic<T>::difference_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_and(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_and(atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_and_explicit(volatile atomic<T>*, typename atomic<T>::value_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_and_explicit(atomic<T>*, typename atomic<T>::value_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_or(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_or(atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_or_explicit(volatile atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_or_explicit(atomic<T>*, typename atomic<T>::value_type,
+                               memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_xor(volatile atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_xor(atomic<T>*, typename atomic<T>::value_type) noexcept;
+  template<class T>
+    T atomic_fetch_xor_explicit(volatile atomic<T>*, typename atomic<T>::value_type,
+                                memory_order) noexcept;
+  template<class T>
+    T atomic_fetch_xor_explicit(atomic<T>*, typename atomic<T>::value_type,
+                                memory_order) noexcept;
 
-  // \ref{atomics.types.operations.arith}, arithmetic operations on atomic types
-  // In the following declarations, \textit{atomic-integral} is either
-  // \tcode{atomic<T>} or a named base class for \tcode{T} from
-  // Table~\ref{tab:atomics.integral} or inferred from Table~\ref{tab:atomics.typedefs}.
-  // If it is \tcode{atomic<T>}, then the declaration is a template
-  // specialization declaration prefixed with \tcode{template <>}.
+  template<class T>
+    void atomic_wait(const volatile atomic<T>*, typename atomic<T>::value_type);
+  template<class T>
+    void atomic_wait(const atomic<T>*, typename atomic<T>::value_type);
+  template<class T>
+    void atomic_wait_explicit(const volatile atomic<T>*, typename atomic<T>::value_type,
+                              memory_order);
+  template<class T>
+    void atomic_wait_explicit(const atomic<T>*, typename atomic<T>::value_type,
+                              memory_order);
+  template<class T>
+    void atomic_notify_one(volatile atomic<T>*);
+  template<class T>
+    void atomic_notify_one(atomic<T>*);
+  template<class T>
+    void atomic_notify_all(volatile atomic<T>*);
+  template<class T>
+    void atomic_notify_all(atomic<T>*);
 
-  @\textit{integral}@ atomic_fetch_add(volatile @\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_add(@\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_add_explicit(volatile @\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_add_explicit(@\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_sub(volatile @\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_sub(@\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_sub_explicit(volatile @\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_sub_explicit(@\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_and(volatile @\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_and(@\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_and_explicit(volatile @\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_and_explicit(@\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_or(volatile @\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_or(@\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_or_explicit(volatile @\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_or_explicit(@\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_xor(volatile @\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_xor(@\textit{atomic-integral}@*, @\textit{integral}@) noexcept;
-  @\textit{integral}@ atomic_fetch_xor_explicit(volatile @\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
-  @\textit{integral}@ atomic_fetch_xor_explicit(@\textit{atomic-integral}@*, @\textit{integral}@, memory_order) noexcept;
+  // \ref{atomics.alias}, type aliases
+  using atomic_bool           = atomic<bool>;
+  using atomic_char           = atomic<char>;
+  using atomic_schar          = atomic<signed char>;
+  using atomic_uchar          = atomic<unsigned char>;
+  using atomic_short          = atomic<short>;
+  using atomic_ushort         = atomic<unsigned short>;
+  using atomic_int            = atomic<int>;
+  using atomic_uint           = atomic<unsigned int>;
+  using atomic_long           = atomic<long>;
+  using atomic_ulong          = atomic<unsigned long>;
+  using atomic_llong          = atomic<long long>;
+  using atomic_ullong         = atomic<unsigned long long>;
+  using atomic_char8_t        = atomic<char8_t>;
+  using atomic_char16_t       = atomic<char16_t>;
+  using atomic_char32_t       = atomic<char32_t>;
+  using atomic_wchar_t        = atomic<wchar_t>;
 
-  // \ref{atomics.types.operations.pointer}, partial specializations for pointers
+  using atomic_int8_t         = atomic<int8_t>;
+  using atomic_uint8_t        = atomic<uint8_t>;
+  using atomic_int16_t        = atomic<int16_t>;
+  using atomic_uint16_t       = atomic<uint16_t>;
+  using atomic_int32_t        = atomic<int32_t>;
+  using atomic_uint32_t       = atomic<uint32_t>;
+  using atomic_int64_t        = atomic<int64_t>;
+  using atomic_uint64_t       = atomic<uint64_t>;
 
-  template <class T>
-    T* atomic_fetch_add(volatile atomic<T*>*, ptrdiff_t) noexcept;
-  template <class T>
-    T* atomic_fetch_add(atomic<T*>*, ptrdiff_t) noexcept;
-  template <class T>
-    T* atomic_fetch_add_explicit(volatile atomic<T*>*, ptrdiff_t, memory_order) noexcept;
-  template <class T>
-    T* atomic_fetch_add_explicit(atomic<T*>*, ptrdiff_t, memory_order) noexcept;
-  template <class T>
-    T* atomic_fetch_sub(volatile atomic<T*>*, ptrdiff_t) noexcept;
-  template <class T>
-    T* atomic_fetch_sub(atomic<T*>*, ptrdiff_t) noexcept;
-  template <class T>
-    T* atomic_fetch_sub_explicit(volatile atomic<T*>*, ptrdiff_t, memory_order) noexcept;
-  template <class T>
-    T* atomic_fetch_sub_explicit(atomic<T*>*, ptrdiff_t, memory_order) noexcept;
+  using atomic_int_least8_t   = atomic<int_least8_t>;
+  using atomic_uint_least8_t  = atomic<uint_least8_t>;
+  using atomic_int_least16_t  = atomic<int_least16_t>;
+  using atomic_uint_least16_t = atomic<uint_least16_t>;
+  using atomic_int_least32_t  = atomic<int_least32_t>;
+  using atomic_uint_least32_t = atomic<uint_least32_t>;
+  using atomic_int_least64_t  = atomic<int_least64_t>;
+  using atomic_uint_least64_t = atomic<uint_least64_t>;
 
-  // \ref{atomics.types.operations.req}, initialization
-  #define ATOMIC_VAR_INIT(value) @\seebelow@
+  using atomic_int_fast8_t    = atomic<int_fast8_t>;
+  using atomic_uint_fast8_t   = atomic<uint_fast8_t>;
+  using atomic_int_fast16_t   = atomic<int_fast16_t>;
+  using atomic_uint_fast16_t  = atomic<uint_fast16_t>;
+  using atomic_int_fast32_t   = atomic<int_fast32_t>;
+  using atomic_uint_fast32_t  = atomic<uint_fast32_t>;
+  using atomic_int_fast64_t   = atomic<int_fast64_t>;
+  using atomic_uint_fast64_t  = atomic<uint_fast64_t>;
+
+  using atomic_intptr_t       = atomic<intptr_t>;
+  using atomic_uintptr_t      = atomic<uintptr_t>;
+  using atomic_size_t         = atomic<size_t>;
+  using atomic_ptrdiff_t      = atomic<ptrdiff_t>;
+  using atomic_intmax_t       = atomic<intmax_t>;
+  using atomic_uintmax_t      = atomic<uintmax_t>;
+
+  using atomic_signed_lock_free   = @\seebelow@;
+  using atomic_unsigned_lock_free = @\seebelow@;
 
   // \ref{atomics.flag}, flag type and operations
   struct atomic_flag;
+
+  bool atomic_flag_test(const volatile atomic_flag*) noexcept;
+  bool atomic_flag_test(const atomic_flag*) noexcept;
+  bool atomic_flag_test_explicit(const volatile atomic_flag*, memory_order) noexcept;
+  bool atomic_flag_test_explicit(const atomic_flag*, memory_order) noexcept;
   bool atomic_flag_test_and_set(volatile atomic_flag*) noexcept;
   bool atomic_flag_test_and_set(atomic_flag*) noexcept;
   bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order) noexcept;
@@ -190,7 +266,17 @@ namespace std {
   void atomic_flag_clear(atomic_flag*) noexcept;
   void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order) noexcept;
   void atomic_flag_clear_explicit(atomic_flag*, memory_order) noexcept;
-  #define ATOMIC_FLAG_INIT @\seebelow@
+
+  void atomic_flag_wait(const volatile atomic_flag*, bool) noexcept;
+  void atomic_flag_wait(const atomic_flag*, bool) noexcept;
+  void atomic_flag_wait_explicit(const volatile atomic_flag*,
+                                 bool, memory_order) noexcept;
+  void atomic_flag_wait_explicit(const atomic_flag*,
+                                 bool, memory_order) noexcept;
+  void atomic_flag_notify_one(volatile atomic_flag*) noexcept;
+  void atomic_flag_notify_one(atomic_flag*) noexcept;
+  void atomic_flag_notify_all(volatile atomic_flag*) noexcept;
+  void atomic_flag_notify_all(atomic_flag*) noexcept;
 
   // \ref{atomics.fences}, fences
   extern "C" void atomic_thread_fence(memory_order) noexcept;
@@ -198,14 +284,103 @@ namespace std {
 }
 \end{codeblock}
 
+\rSec1[atomics.alias]{Type aliases}
+\indexlibraryglobal{atomic_bool}%
+\indexlibraryglobal{atomic_char}%
+\indexlibraryglobal{atomic_schar}%
+\indexlibraryglobal{atomic_uchar}%
+\indexlibraryglobal{atomic_short}%
+\indexlibraryglobal{atomic_ushort}%
+\indexlibraryglobal{atomic_int}%
+\indexlibraryglobal{atomic_uint}%
+\indexlibraryglobal{atomic_long}%
+\indexlibraryglobal{atomic_ulong}%
+\indexlibraryglobal{atomic_llong}%
+\indexlibraryglobal{atomic_ullong}%
+\indexlibraryglobal{atomic_char8_t}%
+\indexlibraryglobal{atomic_char16_t}%
+\indexlibraryglobal{atomic_char32_t}%
+\indexlibraryglobal{atomic_wchar_t}%
+\indexlibraryglobal{atomic_int8_t}%
+\indexlibraryglobal{atomic_uint8_t}%
+\indexlibraryglobal{atomic_int16_t}%
+\indexlibraryglobal{atomic_uint16_t}%
+\indexlibraryglobal{atomic_int32_t}%
+\indexlibraryglobal{atomic_uint32_t}%
+\indexlibraryglobal{atomic_int64_t}%
+\indexlibraryglobal{atomic_uint64_t}%
+\indexlibraryglobal{atomic_int_least8_t}%
+\indexlibraryglobal{atomic_uint_least8_t}%
+\indexlibraryglobal{atomic_int_least16_t}%
+\indexlibraryglobal{atomic_uint_least16_t}%
+\indexlibraryglobal{atomic_int_least32_t}%
+\indexlibraryglobal{atomic_uint_least32_t}%
+\indexlibraryglobal{atomic_int_least64_t}%
+\indexlibraryglobal{atomic_uint_least64_t}%
+\indexlibraryglobal{atomic_int_fast8_t}%
+\indexlibraryglobal{atomic_uint_fast8_t}%
+\indexlibraryglobal{atomic_int_fast16_t}%
+\indexlibraryglobal{atomic_uint_fast16_t}%
+\indexlibraryglobal{atomic_int_fast32_t}%
+\indexlibraryglobal{atomic_uint_fast32_t}%
+\indexlibraryglobal{atomic_int_fast64_t}%
+\indexlibraryglobal{atomic_uint_fast64_t}%
+\indexlibraryglobal{atomic_intptr_t}%
+\indexlibraryglobal{atomic_uintptr_t}%
+\indexlibraryglobal{atomic_size_t}%
+\indexlibraryglobal{atomic_ptrdiff_t}%
+\indexlibraryglobal{atomic_intmax_t}%
+\indexlibraryglobal{atomic_uintmax_t}%
+\pnum
+The type aliases \tcode{atomic_int$N$_t}, \tcode{atomic_uint$N$_t},
+\tcode{atomic_intptr_t}, and \tcode{atomic_uintptr_t}
+are defined if and only if
+\tcode{int$N$_t}, \tcode{uint$N$_t},
+\tcode{intptr_t}, and \tcode{uintptr_t}
+are defined, respectively.
+
+\pnum
+\indexlibraryglobal{atomic_signed_lock_free}%
+\indexlibraryglobal{atomic_unsigned_lock_free}%
+The type aliases
+\tcode{atomic_signed_lock_free} and \tcode{atomic_unsigned_lock_free}
+name specializations of \tcode{atomic}
+whose template arguments are integral types, respectively signed and unsigned,
+and whose \tcode{is_always_lock_free} property is \tcode{true}.
+\begin{note}
+These aliases are optional in freestanding implementations\iref{compliance}.
+\end{note}
+Implementations should choose for these aliases
+the integral specializations of \tcode{atomic}
+for which the atomic waiting and notifying operations\iref{atomics.wait}
+are most efficient.
+
 \rSec1[atomics.order]{Order and consistency}
+\indexlibraryglobal{memory_order}%
+\indexlibrarymember{relaxed}{memory_order}%
+\indexlibrarymember{consume}{memory_order}%
+\indexlibrarymember{acquire}{memory_order}%
+\indexlibrarymember{release}{memory_order}%
+\indexlibrarymember{acq_rel}{memory_order}%
+\indexlibrarymember{seq_cst}{memory_order}%
+\indexlibraryglobal{memory_order_relaxed}%
+\indexlibraryglobal{memory_order_consume}%
+\indexlibraryglobal{memory_order_acquire}%
+\indexlibraryglobal{memory_order_release}%
+\indexlibraryglobal{memory_order_acq_rel}%
+\indexlibraryglobal{memory_order_seq_cst}%
 
 \begin{codeblock}
 namespace std {
-  typedef enum memory_order {
-    memory_order_relaxed, memory_order_consume, memory_order_acquire, 
-    memory_order_release, memory_order_acq_rel, memory_order_seq_cst
-  } memory_order;
+  enum class memory_order : @\unspec@ {
+    relaxed, consume, acquire, release, acq_rel, seq_cst
+  };
+  inline constexpr memory_order memory_order_relaxed = memory_order::relaxed;
+  inline constexpr memory_order memory_order_consume = memory_order::consume;
+  inline constexpr memory_order memory_order_acquire = memory_order::acquire;
+  inline constexpr memory_order memory_order_release = memory_order::release;
+  inline constexpr memory_order memory_order_acq_rel = memory_order::acq_rel;
+  inline constexpr memory_order memory_order_seq_cst = memory_order::seq_cst;
 }
 \end{codeblock}
 
@@ -216,124 +391,142 @@ The enumeration \tcode{memory_order} specifies the detailed regular
 enumerated values and their meanings are as follows:
 
 \begin{itemize}
-\item \tcode{memory_order_relaxed}: no operation orders memory.
+\item \tcode{memory_order::relaxed}: no operation orders memory.
 
-\item \tcode{memory_order_release}, \tcode{memory_order_acq_rel}, and
-\tcode{memory_order_seq_cst}: a store operation performs a release operation on the
+\item \tcode{memory_order::release}, \tcode{memory_order::acq_rel}, and
+\tcode{memory_order::seq_cst}: a store operation performs a release operation on the
 affected memory location.
 
-\item \tcode{memory_order_consume}: a load operation performs a consume operation on the
+\item \tcode{memory_order::consume}: a load operation performs a consume operation on the
 affected memory location.
-\begin{note} Prefer \tcode{memory_order_acquire}, which provides stronger guarantees
-than \tcode{memory_order_consume}. Implementations have found it infeasible
-to provide performance better than that of \tcode{memory_order_acquire}.
-Specification revisions are under consideration. \end{note}
+\begin{note}
+Prefer \tcode{memory_order::acquire}, which provides stronger guarantees
+than \tcode{memory_order::consume}. Implementations have found it infeasible
+to provide performance better than that of \tcode{memory_order::acquire}.
+Specification revisions are under consideration.
+\end{note}
 
-\item \tcode{memory_order_acquire}, \tcode{memory_order_acq_rel}, and
-\tcode{memory_order_seq_cst}: a load operation performs an acquire operation on the
+\item \tcode{memory_order::acquire}, \tcode{memory_order::acq_rel}, and
+\tcode{memory_order::seq_cst}: a load operation performs an acquire operation on the
 affected memory location.
 \end{itemize}
 
-\begin{note} Atomic operations specifying \tcode{memory_order_relaxed} are relaxed
+\begin{note}
+Atomic operations specifying \tcode{memory_order::relaxed} are relaxed
 with respect to memory ordering. Implementations must still guarantee that any
 given atomic access to a particular atomic object be indivisible with respect
-to all other atomic accesses to that object. \end{note}
+to all other atomic accesses to that object.
+\end{note}
 
 \pnum
-An atomic operation \term{A} that performs a release operation on an atomic
-object \term{M} synchronizes with an atomic operation \term{B} that performs
-an acquire operation on \term{M} and takes its value from any side effect in the
-release sequence headed by \term{A}.
+An atomic operation $A$ that performs a release operation on an atomic
+object $M$ synchronizes with an atomic operation $B$ that performs
+an acquire operation on $M$ and takes its value from any side effect in the
+release sequence headed by $A$.
 
 \pnum
-There shall be a single total order \textit{S} on all \tcode{memory_order_seq_cst}
-operations, consistent with the ``happens before'' order and modification orders for all
-affected locations, such that each \tcode{memory_order_seq_cst} operation
-\textit{B} that loads a
-value from an atomic object \textit{M}
-observes one of the following values:
-
+An atomic operation $A$ on some atomic object $M$ is
+\defn{coherence-ordered before}
+another atomic operation $B$ on $M$ if
 \begin{itemize}
-\item the result of the last modification \textit{A} of \textit{M} that precedes
-\textit{B} in \textit{S}, if it exists, or
-
-\item if \textit{A} exists, the result of some modification of \textit{M}
-that is not
-\tcode{memory_order_seq_cst} and that does not happen before \textit{A}, or
-
-\item if \textit{A} does not exist, the result of some modification of \textit{M}
-that is not
-\tcode{memory_order_seq_cst}.
+\item $A$ is a modification, and
+$B$ reads the value stored by $A$, or
+\item $A$ precedes $B$
+in the modification order of $M$, or
+\item $A$ and $B$ are not
+the same atomic read-modify-write operation, and
+there exists an atomic modification $X$ of $M$
+such that $A$ reads the value stored by $X$ and
+$X$ precedes $B$
+in the modification order of $M$, or
+\item there exists an atomic modification $X$ of $M$
+such that $A$ is coherence-ordered before $X$ and
+$X$ is coherence-ordered before $B$.
 \end{itemize}
 
-\begin{note} Although it is not explicitly required that \textit{S} include locks, it can
-always be extended to an order that does include lock and unlock operations, since the
-ordering between those is already included in the ``happens before'' ordering. \end{note}
-
 \pnum
-For an atomic operation \textit{B} that reads the value of an atomic object \textit{M},
-if there is a \tcode{memory_order_seq_cst} fence \textit{X} sequenced before \textit{B},
-then \textit{B} observes either the last \tcode{memory_order_seq_cst} modification of
-\textit{M} preceding \textit{X} in the total order \textit{S} or a later modification of
-\textit{M} in its modification order.
-
-\pnum
-For atomic operations \textit{A} and \textit{B} on an atomic object \textit{M}, where
-\textit{A} modifies \textit{M} and \textit{B} takes its value, if there is a
-\tcode{memory_order_seq_cst} fence \textit{X} such that \textit{A} is sequenced before
-\textit{X} and \textit{B} follows \textit{X} in \textit{S}, then \textit{B} observes
-either the effects of \textit{A} or a later modification of \textit{M} in its
-modification order.
-
-\pnum
-For atomic operations \textit{A} and \textit{B} on an atomic object \textit{M}, where
-\textit{A} modifies \textit{M} and \textit{B} takes its value, if there are
-\tcode{memory_order_seq_cst} fences \textit{X} and \textit{Y} such that \textit{A} is
-sequenced before \textit{X}, \textit{Y} is sequenced before \textit{B}, and \textit{X}
-precedes \textit{Y} in \textit{S}, then \textit{B} observes either the effects of
-\textit{A} or a later modification of \textit{M} in its modification order.
-
-\pnum
-For atomic modifications \textit{A} and \textit{B} of an atomic object \textit{M},
-\textit{B} occurs later than \textit{A} in the modification order of \textit{M} if:
-
+There is a single total order $S$
+on all \tcode{memory_order::seq_cst} operations, including fences,
+that satisfies the following constraints.
+First, if $A$ and $B$ are
+\tcode{memory_order::seq_cst} operations and
+$A$ strongly happens before $B$,
+then $A$ precedes $B$ in $S$.
+Second, for every pair of atomic operations $A$ and
+$B$ on an object $M$,
+where $A$ is coherence-ordered before $B$,
+the following four conditions are required to be satisfied by $S$:
 \begin{itemize}
-\item there is a \tcode{memory_order_seq_cst} fence \textit{X} such that \textit{A}
-is sequenced before \textit{X}, and \textit{X} precedes \textit{B} in \textit{S}, or
-\item there is a \tcode{memory_order_seq_cst} fence \textit{Y} such that \textit{Y}
-is sequenced before \textit{B}, and \textit{A} precedes \textit{Y} in \textit{S}, or
-\item there are \tcode{memory_order_seq_cst} fences \textit{X} and \textit{Y} such that \textit{A}
-is sequenced before \textit{X}, \textit{Y} is sequenced before \textit{B},
-and \textit{X} precedes \textit{Y} in \textit{S}.
+\item if $A$ and $B$ are both
+\tcode{memory_order::seq_cst} operations,
+then $A$ precedes $B$ in $S$; and
+\item if $A$ is a \tcode{memory_order::seq_cst} operation and
+$B$ happens before
+a \tcode{memory_order::seq_cst} fence $Y$,
+then $A$ precedes $Y$ in $S$; and
+\item if a \tcode{memory_order::seq_cst} fence $X$
+happens before $A$ and
+$B$ is a \tcode{memory_order::seq_cst} operation,
+then $X$ precedes $B$ in $S$; and
+\item if a \tcode{memory_order::seq_cst} fence $X$
+happens before $A$ and
+$B$ happens before
+a \tcode{memory_order::seq_cst} fence $Y$,
+then $X$ precedes $Y$ in $S$.
 \end{itemize}
 
+\pnum
+\begin{note}
+This definition ensures that $S$ is consistent with
+the modification order of any atomic object $M$.
+It also ensures that
+a \tcode{memory_order::seq_cst} load $A$ of $M$
+gets its value either from the last modification of $M$
+that precedes $A$ in $S$ or
+from some non-\tcode{memory_order::seq_cst} modification of $M$
+that does not happen before any modification of $M$
+that precedes $A$ in $S$.
+\end{note}
 
 \pnum
-\begin{note} \tcode{memory_order_seq_cst} ensures sequential consistency only for a
-program that is free of data races and uses exclusively \tcode{memory_order_seq_cst}
-operations. Any use of weaker ordering will invalidate this guarantee unless extreme
-care is used. In particular, \tcode{memory_order_seq_cst} fences ensure a total order
-only for the fences themselves. Fences cannot, in general, be used to restore sequential
-consistency for atomic operations with weaker ordering specifications. \end{note}
+\begin{note}
+We do not require that $S$ be consistent with
+``happens before''\iref{intro.races}.
+This allows more efficient implementation
+of \tcode{memory_order::acquire} and \tcode{memory_order::release}
+on some machine architectures.
+It can produce surprising results
+when these are mixed with \tcode{memory_order::seq_cst} accesses.
+\end{note}
+
+\pnum
+\begin{note}
+\tcode{memory_order::seq_cst} ensures sequential consistency only
+for a program that is free of data races and
+uses exclusively \tcode{memory_order::seq_cst} atomic operations.
+Any use of weaker ordering will invalidate this guarantee
+unless extreme care is used.
+In many cases, \tcode{memory_order::seq_cst} atomic operations are reorderable
+with respect to other atomic operations performed by the same thread.
+\end{note}
 
 \pnum
 Implementations should ensure that no ``out-of-thin-air'' values are computed that
 circularly depend on their own computation.
 
-\begin{note} For example, with \tcode{x} and \tcode{y} initially zero,
-
+\begin{note}
+For example, with \tcode{x} and \tcode{y} initially zero,
 \begin{codeblock}
 // Thread 1:
-r1 = y.load(memory_order_relaxed);
-x.store(r1, memory_order_relaxed);
+r1 = y.load(memory_order::relaxed);
+x.store(r1, memory_order::relaxed);
 \end{codeblock}
 
 \begin{codeblock}
 // Thread 2:
-r2 = x.load(memory_order_relaxed);
-y.store(r2, memory_order_relaxed);
+r2 = x.load(memory_order::relaxed);
+y.store(r2, memory_order::relaxed);
 \end{codeblock}
-
 should not produce \tcode{r1 == r2 == 42}, since the store of 42 to \tcode{y} is only
 possible if the store to \tcode{x} stores \tcode{42}, which circularly depends on the
 store to \tcode{y} storing \tcode{42}. Note that without this restriction, such an
@@ -341,21 +534,21 @@ execution is possible.
 \end{note}
 
 \pnum
-\begin{note} The recommendation similarly disallows \tcode{r1 == r2 == 42} in the
+\begin{note}
+The recommendation similarly disallows \tcode{r1 == r2 == 42} in the
 following example, with \tcode{x} and \tcode{y} again initially zero:
 
 \begin{codeblock}
 // Thread 1:
-r1 = x.load(memory_order_relaxed);
-if (r1 == 42) y.store(42, memory_order_relaxed);
+r1 = x.load(memory_order::relaxed);
+if (r1 == 42) y.store(42, memory_order::relaxed);
 \end{codeblock}
 
 \begin{codeblock}
 // Thread 2:
-r2 = y.load(memory_order_relaxed);
-if (r2 == 42) x.store(42, memory_order_relaxed);
+r2 = y.load(memory_order::relaxed);
+if (r2 == 42) x.store(42, memory_order::relaxed);
 \end{codeblock}
-
 \end{note}
 
 \pnum
@@ -367,28 +560,42 @@ the read-modify-write operation.
 Implementations should make atomic stores visible to atomic loads within a reasonable
 amount of time.
 
-\indexlibrary{\idxcode{kill_dependency}}%
+\indexlibraryglobal{kill_dependency}%
 \begin{itemdecl}
-template <class T>
+template<class T>
   T kill_dependency(T y) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects The argument does not carry a dependency to the return
-value~(\ref{intro.multithread}).
+\effects
+The argument does not carry a dependency to the return
+value\iref{intro.multithread}.
 
 \pnum
-\returns \tcode{y}.
+\returns
+\tcode{y}.
 \end{itemdescr}
 
 
 \rSec1[atomics.lockfree]{Lock-free property}
 
+\indexlibraryglobal{ATOMIC_BOOL_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_CHAR_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_CHAR8_T_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_CHAR16_T_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_CHAR32_T_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_WCHAR_T_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_SHORT_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_INT_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_LONG_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_LLONG_LOCK_FREE}%
+\indexlibraryglobal{ATOMIC_POINTER_LOCK_FREE}%
 \indeximpldef{values of various \tcode{ATOMIC_..._LOCK_FREE} macros}
 \begin{codeblock}
 #define ATOMIC_BOOL_LOCK_FREE @\unspec@
 #define ATOMIC_CHAR_LOCK_FREE @\unspec@
+#define ATOMIC_CHAR8_T_LOCK_FREE @\unspec@
 #define ATOMIC_CHAR16_T_LOCK_FREE @\unspec@
 #define ATOMIC_CHAR32_T_LOCK_FREE @\unspec@
 #define ATOMIC_WCHAR_T_LOCK_FREE @\unspec@
@@ -408,148 +615,1868 @@ lock-free. A value of 1 indicates that the types are sometimes lock-free. A
 value of 2 indicates that the types are always lock-free.
 
 \pnum
-The function \tcode{atomic_is_lock_free}~(\ref{atomics.types.operations})
+At least one signed integral specialization of the \tcode{atomic} template,
+along with the specialization
+for the corresponding unsigned type\iref{basic.fundamental},
+is always lock-free.
+\begin{note}
+This requirement is optional in freestanding implementations\iref{compliance}.
+\end{note}
+
+\pnum
+The function \tcode{atomic_is_lock_free}\iref{atomics.types.operations}
 indicates whether the object is lock-free. In any given program execution, the
 result of the lock-free query shall be consistent for all pointers of the same
 type.
 
 \pnum
 Atomic operations that are not lock-free are considered to potentially
-block~(\ref{intro.progress}).
+block\iref{intro.progress}.
 
 \pnum
-\begin{note} Operations that are lock-free should also be address-free. That is,
+\begin{note}
+Operations that are lock-free should also be address-free. That is,
 atomic operations on the same memory location via two different addresses will
 communicate atomically. The implementation should not depend on any
 per-process state. This restriction enables communication  by memory that is
 mapped into a process more than once and by memory that is shared between two
-processes. \end{note}
+processes.
+\end{note}
 
-\rSec1[atomics.types.generic]{Atomic types}
+\rSec1[atomics.wait]{Waiting and notifying}
+
+\pnum
+\defnx{Atomic waiting operations}{atomic!waiting operation}
+and \defnx{atomic notifying operations}{atomic!notifying operation}
+provide a mechanism to wait for the value of an atomic object to change
+more efficiently than can be achieved with polling.
+An atomic waiting operation may block until it is unblocked
+by an atomic notifying operation, according to each function's effects.
+\begin{note}
+Programs are not guaranteed to observe transient atomic values,
+an issue known as the A-B-A problem,
+resulting in continued blocking if a condition is only temporarily met.
+\end{note}
+
+\pnum
+\begin{note}
+The following functions are atomic waiting operations:
+\begin{itemize}
+\item \tcode{atomic<T>::wait},
+\item \tcode{atomic_flag::wait},
+\item \tcode{atomic_wait} and \tcode{atomic_wait_explicit},
+\item \tcode{atomic_flag_wait} and \tcode{atomic_flag_wait_explicit}, and
+\item \tcode{atomic_ref<T>::wait}.
+\end{itemize}
+\end{note}
+
+\pnum
+\begin{note}
+The following functions are atomic notifying operations:
+\begin{itemize}
+\item \tcode{atomic<T>::notify_one} and \tcode{atomic<T>::notify_all},
+\item \tcode{atomic_flag::notify_one} and \tcode{atomic_flag::notify_all},
+\item \tcode{atomic_notify_one} and \tcode{atomic_notify_all},
+\item \tcode{atomic_flag_notify_one} and \tcode{atomic_flag_notify_all}, and
+\item \tcode{atomic_ref<T>::notify_one} and \tcode{atomic_ref<T>::notify_all}.
+\end{itemize}
+\end{note}
+
+\indextext{atomic!waiting operation!eligible to be unblocked}%
+\pnum
+A call to an atomic waiting operation on an atomic object \tcode{M}
+is \defn{eligible to be unblocked}
+by a call to an atomic notifying operation on \tcode{M}
+if there exist side effects \tcode{X} and \tcode{Y} on \tcode{M} such that:
+\begin{itemize}
+\item the atomic waiting operation has blocked after observing the result of \tcode{X},
+\item \tcode{X} precedes \tcode{Y} in the modification order of \tcode{M}, and
+\item \tcode{Y} happens before the call to the atomic notifying operation.
+\end{itemize}
+
+\rSec1[atomics.ref.generic]{Class template \tcode{atomic_ref}}
+
+\indexlibraryglobal{atomic_ref}%
+\indexlibrarymember{value_type}{atomic_ref}%
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic_ref {
+  private:
+    T* ptr;             // \expos
+  public:
+    using value_type = T;
+    static constexpr size_t required_alignment = @\impdefx{required alignment for \tcode{atomic_ref} type's operations}@;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic_ref} type's operations are always lock free}@;
+    bool is_lock_free() const noexcept;
+
+    explicit atomic_ref(T&);
+    atomic_ref(const atomic_ref&) noexcept;
+    atomic_ref& operator=(const atomic_ref&) = delete;
+
+    void store(T, memory_order = memory_order_seq_cst) const noexcept;
+    T operator=(T) const noexcept;
+    T load(memory_order = memory_order_seq_cst) const noexcept;
+    operator T() const noexcept;
+
+    T exchange(T, memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_weak(T&, T,
+                               memory_order, memory_order) const noexcept;
+    bool compare_exchange_strong(T&, T,
+                                 memory_order, memory_order) const noexcept;
+    bool compare_exchange_weak(T&, T,
+                               memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_strong(T&, T,
+                                 memory_order = memory_order_seq_cst) const noexcept;
+
+    void wait(T, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() const noexcept;
+    void notify_all() const noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+An \tcode{atomic_ref} object applies atomic operations\iref{atomics.general} to
+the object referenced by \tcode{*ptr} such that,
+for the lifetime\iref{basic.life} of the \tcode{atomic_ref} object,
+the object referenced by \tcode{*ptr} is an atomic object\iref{intro.races}.
+
+\pnum
+The program is ill-formed if \tcode{is_trivially_copyable_v<T>} is \tcode{false}.
+
+\pnum
+The lifetime\iref{basic.life} of an object referenced by \tcode{*ptr}
+shall exceed the lifetime of all \tcode{atomic_ref}s that reference the object.
+While any \tcode{atomic_ref} instances exist
+that reference the \tcode{*ptr} object,
+all accesses to that object shall exclusively occur
+through those \tcode{atomic_ref} instances.
+No subobject of the object referenced by \tcode{atomic_ref}
+shall be concurrently referenced by any other \tcode{atomic_ref} object.
+
+\pnum
+Atomic operations applied to an object
+through a referencing \tcode{atomic_ref} are atomic with respect to
+atomic operations applied through any other \tcode{atomic_ref}
+referencing the same object.
+\begin{note}
+Atomic operations or the \tcode{atomic_ref} constructor could acquire
+a shared resource, such as a lock associated with the referenced object,
+to enable atomic operations to be applied to the referenced object.
+\end{note}
+
+\rSec2[atomics.ref.ops]{Operations}
+
+\indexlibrarymember{required_alignment}{atomic_ref}%
+\indexlibrarymember{required_alignment}{atomic_ref<T*>}%
+\indexlibrarymember{required_alignment}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{required_alignment}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+static constexpr size_t required_alignment;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The alignment required for an object to be referenced by an atomic reference,
+which is at least \tcode{alignof(T)}.
+
+\pnum
+\begin{note}
+Hardware could require an object
+referenced by an \tcode{atomic_ref}
+to have stricter alignment\iref{basic.align}
+than other objects of type \tcode{T}.
+Further, whether operations on an \tcode{atomic_ref}
+are lock-free could depend on the alignment of the referenced object.
+For example, lock-free operations on \tcode{std::complex<double>}
+could be supported only if aligned to \tcode{2*alignof(double)}.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{is_always_lock_free}{atomic_ref}%
+\indexlibrarymember{is_always_lock_free}{atomic_ref<T*>}%
+\indexlibrarymember{is_always_lock_free}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{is_always_lock_free}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+static constexpr bool is_always_lock_free;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The static data member \tcode{is_always_lock_free} is \tcode{true}
+if the \tcode{atomic_ref} type's operations are always lock-free,
+and \tcode{false} otherwise.
+\end{itemdescr}
+
+\indexlibrarymember{is_lock_free}{atomic_ref}%
+\indexlibrarymember{is_lock_free}{atomic_ref<T*>}%
+\indexlibrarymember{is_lock_free}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{is_lock_free}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+bool is_lock_free() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{true} if operations on all objects of the type \tcode{atomic_ref<T>}
+are lock-free,
+\tcode{false} otherwise.
+\end{itemdescr}
+
+\indexlibraryctor{atomic_ref}%
+\indexlibraryctor{atomic_ref<T*>}%
+\indexlibrary{\idxcode{atomic_ref<\placeholder{integral}>}!constructor}%
+\indexlibrary{\idxcode{atomic_ref<\placeholder{floating-point}>}!constructor}%
+\begin{itemdecl}
+atomic_ref(T& obj);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The referenced object is aligned to \tcode{required_alignment}.
+
+\pnum
+\ensures
+\tcode{*this} references \tcode{obj}.
+
+\pnum
+\throws
+Nothing.
+\end{itemdescr}
+
+\indexlibraryctor{atomic_ref}%
+\indexlibraryctor{atomic_ref<T*>}%
+\indexlibrary{\idxcode{atomic_ref<\placeholder{integral}>}!constructor}%
+\indexlibrary{\idxcode{atomic_ref<\placeholder{floating-point}>}!constructor}%
+\begin{itemdecl}
+atomic_ref(const atomic_ref& ref) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\ensures
+\tcode{*this} references the object referenced by \tcode{ref}.
+\end{itemdescr}
+
+\indexlibrarymember{store}{atomic_ref}%
+\indexlibrarymember{store}{atomic_ref<T*>}%
+\indexlibrarymember{store}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{store}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+void store(T desired, memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{order} argument is neither
+\tcode{memory_order_consume},
+\tcode{memory_order_acquire}, nor
+\tcode{memory_order_acq_rel}.
+
+\pnum
+\effects
+Atomically replaces the value referenced by \tcode{*ptr}
+with the value of \tcode{desired}.
+Memory is affected according to the value of \tcode{order}.
+\end{itemdescr}
+
+\indexlibrarymember{operator=}{atomic_ref}%
+\indexlibrarymember{operator=}{atomic_ref<T*>}%
+\indexlibrarymember{operator=}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator=}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T operator=(T desired) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+store(desired);
+return desired;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrarymember{load}{atomic_ref}%
+\indexlibrarymember{load}{atomic_ref<T*>}%
+\indexlibrarymember{load}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{load}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T load(memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{order} argument is neither
+\tcode{memory_order_release} nor \tcode{memory_order_acq_rel}.
+
+\pnum
+\effects
+Memory is affected according to the value of \tcode{order}.
+
+\pnum
+\returns
+Atomically returns the value referenced by \tcode{*ptr}.
+\end{itemdescr}
+
+\indexlibrarymember{operator \placeholder{type}}{atomic_ref}%
+\indexlibrarymember{operator T*}{atomic_ref<T*>}%
+\indexlibrarymember{operator \placeholder{integral}}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator \placeholder{floating-point}}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+operator T() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return load();}
+\end{itemdescr}
+
+\indexlibrarymember{exchange}{atomic_ref}%
+\indexlibrarymember{exchange}{atomic_ref<T*>}%
+\indexlibrarymember{exchange}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{exchange}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T exchange(T desired, memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value referenced by \tcode{*ptr}
+with \tcode{desired}.
+Memory is affected according to the value of \tcode{order}.
+This operation is an atomic read-modify-write operation\iref{intro.multithread}.
+
+\pnum
+\returns
+Atomically returns the value referenced by \tcode{*ptr}
+immediately before the effects.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_weak}{atomic_ref}%
+\indexlibrarymember{compare_exchange_weak}{atomic_ref<T*>}%
+\indexlibrarymember{compare_exchange_weak}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{compare_exchange_weak}{atomic_ref<\placeholder{floating-point}>}%
+\indexlibrarymember{compare_exchange_strong}{atomic_ref}%
+\indexlibrarymember{compare_exchange_strong}{atomic_ref<T*>}%
+\indexlibrarymember{compare_exchange_strong}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{compare_exchange_strong}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) const noexcept;
+
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) const noexcept;
+
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order_seq_cst) const noexcept;
+
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{failure} argument is neither
+\tcode{memory_order_release} nor \tcode{memory_order_acq_rel}.
+
+\pnum
+\effects
+Retrieves the value in \tcode{expected}.
+It then atomically compares the value representation of
+the value referenced by \tcode{*ptr} for equality
+with that previously retrieved from \tcode{expected},
+and if \tcode{true}, replaces the value referenced by \tcode{*ptr}
+with that in \tcode{desired}.
+If and only if the comparison is \tcode{true},
+memory is affected according to the value of \tcode{success}, and
+if the comparison is \tcode{false},
+memory is affected according to the value of \tcode{failure}.
+When only one \tcode{memory_order} argument is supplied,
+the value of \tcode{success} is \tcode{order}, and
+the value of \tcode{failure} is \tcode{order}
+except that a value of \tcode{memory_order_acq_rel} shall be replaced by
+the value \tcode{memory_order_acquire} and
+a value of \tcode{memory_order_release} shall be replaced by
+the value \tcode{memory_order_relaxed}.
+If and only if the comparison is \tcode{false} then,
+after the atomic operation,
+the value in \tcode{expected} is replaced by
+the value read from the value referenced by \tcode{*ptr}
+during the atomic comparison.
+If the operation returns \tcode{true},
+these operations are atomic read-modify-write operations\iref{intro.races}
+on the value referenced by \tcode{*ptr}.
+Otherwise, these operations are atomic load operations on that memory.
+
+\pnum
+\returns
+The result of the comparison.
+
+\pnum
+\remarks
+A weak compare-and-exchange operation may fail spuriously.
+That is, even when the contents of memory referred to
+by \tcode{expected} and \tcode{ptr} are equal,
+it may return \tcode{false} and
+store back to \tcode{expected} the same memory contents
+that were originally there.
+\begin{note}
+This spurious failure enables implementation of compare-and-exchange
+on a broader class of machines, e.g., load-locked store-conditional machines.
+A consequence of spurious failure is
+that nearly all uses of weak compare-and-exchange will be in a loop.
+When a compare-and-exchange is in a loop,
+the weak version will yield better performance on some platforms.
+When a weak compare-and-exchange would require a loop and
+a strong one would not, the strong one is preferable.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{wait}{atomic_ref<T>}%
+\begin{itemdecl}
+void wait(T old, memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+\tcode{order} is
+neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Repeatedly performs the following steps, in order:
+\begin{itemize}
+\item
+  Evaluates \tcode{load(order)} and
+  compares its value representation for equality against that of \tcode{old}.
+\item
+  If they compare unequal, returns.
+\item
+  Blocks until it
+  is unblocked by an atomic notifying operation or is unblocked spuriously.
+\end{itemize}
+
+\pnum
+\remarks
+This function is an atomic waiting operation\iref{atomics.wait}
+on atomic object \tcode{*ptr}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_one}{atomic_ref<T>}%
+\begin{itemdecl}
+void notify_one() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of at least one atomic waiting operation on \tcode{*ptr}
+that is eligible to be unblocked\iref{atomics.wait} by this call,
+if any such atomic waiting operations exist.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}
+on atomic object \tcode{*ptr}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_all}{atomic_ref<T>}%
+\begin{itemdecl}
+void notify_all() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of all atomic waiting operations on \tcode{*ptr}
+that are eligible to be unblocked\iref{atomics.wait} by this call.
+
+\pnum
+\remarks
+ This function is an atomic notifying operation\iref{atomics.wait}
+ on atomic object \tcode{*ptr}.
+\end{itemdescr}
+
+\rSec2[atomics.ref.int]{Specializations for integral types}
+
+\pnum
+\indexlibrary{\idxcode{atomic_ref<\placeholder{integral}>}}%
+There are specializations of the \tcode{atomic_ref} class template
+for the integral types
+\tcode{char},
+\tcode{signed char},
+\tcode{unsigned char},
+\tcode{short},
+\tcode{unsigned short},
+\tcode{int},
+\tcode{unsigned int},
+\tcode{long},
+\tcode{unsigned long},
+\tcode{long long},
+\tcode{unsigned long long},
+\tcode{char8_t},
+\tcode{char16_t},
+\tcode{char32_t},
+\tcode{wchar_t},
+and any other types needed by the typedefs in the header \libheaderref{cstdint}.
+For each such type \tcode{\placeholder{integral}},
+the specialization \tcode{atomic_ref<\placeholder{integral}>} provides
+additional atomic operations appropriate to integral types.
+\begin{note}
+The specialization \tcode{atomic_ref<bool>}
+uses the primary template\iref{atomics.ref.generic}.
+\end{note}
 
 \begin{codeblock}
 namespace std {
-  template <class T> struct atomic {
+  template<> struct atomic_ref<@\placeholder{integral}@> {
+  private:
+    @\placeholder{integral}@* ptr;        // \expos
+  public:
+    using value_type = @\placeholder{integral}@;
+    using difference_type = value_type;
+    static constexpr size_t required_alignment = @\impdefx{required alignment for \tcode{atomic_ref} type's operations}@;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic_ref} type's operations are always lock free}@;
+    bool is_lock_free() const noexcept;
+
+    explicit atomic_ref(@\placeholder{integral}@&);
+    atomic_ref(const atomic_ref&) noexcept;
+    atomic_ref& operator=(const atomic_ref&) = delete;
+
+    void store(@\placeholdernc{integral}@, memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholdernc{integral}@ operator=(@\placeholder{integral}@) const noexcept;
+    @\placeholdernc{integral}@ load(memory_order = memory_order_seq_cst) const noexcept;
+    operator @\placeholdernc{integral}@() const noexcept;
+
+    @\placeholdernc{integral}@ exchange(@\placeholdernc{integral}@,
+                      memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholder{integral}@,
+                               memory_order, memory_order) const noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholder{integral}@,
+                                 memory_order, memory_order) const noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholder{integral}@,
+                               memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholder{integral}@,
+                                 memory_order = memory_order_seq_cst) const noexcept;
+
+    @\placeholdernc{integral}@ fetch_add(@\placeholdernc{integral}@,
+                       memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholdernc{integral}@ fetch_sub(@\placeholdernc{integral}@,
+                       memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholdernc{integral}@ fetch_and(@\placeholdernc{integral}@,
+                       memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholdernc{integral}@ fetch_or(@\placeholdernc{integral}@,
+                      memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholdernc{integral}@ fetch_xor(@\placeholdernc{integral}@,
+                       memory_order = memory_order_seq_cst) const noexcept;
+
+    @\placeholdernc{integral}@ operator++(int) const noexcept;
+    @\placeholdernc{integral}@ operator--(int) const noexcept;
+    @\placeholdernc{integral}@ operator++() const noexcept;
+    @\placeholdernc{integral}@ operator--() const noexcept;
+    @\placeholdernc{integral}@ operator+=(@\placeholdernc{integral}@) const noexcept;
+    @\placeholdernc{integral}@ operator-=(@\placeholdernc{integral}@) const noexcept;
+    @\placeholdernc{integral}@ operator&=(@\placeholdernc{integral}@) const noexcept;
+    @\placeholdernc{integral}@ operator|=(@\placeholdernc{integral}@) const noexcept;
+    @\placeholdernc{integral}@ operator^=(@\placeholdernc{integral}@) const noexcept;
+
+    void wait(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() const noexcept;
+    void notify_all() const noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+Descriptions are provided below only for members
+that differ from the primary template.
+
+\pnum
+The following operations perform arithmetic computations.
+The key, operator, and computation correspondence is identified
+in \tref{atomic.types.int.comp}.
+
+\indexlibrarymember{fetch_add}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{fetch_and}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{fetch_or}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{fetch_sub}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{fetch_xor}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+@\placeholdernc{integral}@ fetch_@\placeholdernc{key}@(@\placeholdernc{integral}@ operand, memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value referenced by \tcode{*ptr} with
+the result of the computation applied to the value referenced by \tcode{*ptr}
+and the given operand.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.races}.
+
+\pnum
+\returns
+Atomically, the value referenced by \tcode{*ptr}
+immediately before the effects.
+
+\pnum
+\indextext{signed integer representation!two's complement}%
+\remarks
+For signed integer types,
+the result is as if the object value and parameters
+were converted to their corresponding unsigned types,
+the computation performed on those types, and
+the result converted back to the signed type.
+\begin{note}
+There are no undefined results arising from the computation.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{operator+=}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator-=}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator\&=}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator"|=}{atomic_ref<\placeholder{integral}>}%
+\indexlibrarymember{operator\caret=}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+@\placeholdernc{integral}@ operator @\placeholder{op}@=(@\placeholdernc{integral}@ operand) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\tcode{return fetch_\placeholdernc{key}(operand) \placeholder{op} operand;}
+\end{itemdescr}
+
+\rSec2[atomics.ref.float]{Specializations for floating-point types}
+
+\pnum
+\indexlibrary{\idxcode{atomic_ref<\placeholder{floating-point}>}}%
+There are specializations of the \tcode{atomic_ref} class template
+for the floating-point types
+\tcode{float},
+\tcode{double}, and
+\tcode{long double}.
+For each such type \tcode{\placeholder{floating-point}},
+the specialization \tcode{atomic_ref<\placeholder{floating-\-point}>} provides
+additional atomic operations appropriate to floating-point types.
+
+\begin{codeblock}
+namespace std {
+  template<> struct atomic_ref<@\placeholder{floating-point}@> {
+  private:
+    @\placeholder{floating-point}@* ptr;  // \expos
+  public:
+    using value_type = @\placeholder{floating-point}@;
+    using difference_type = value_type;
+    static constexpr size_t required_alignment = @\impdefx{required alignment for \tcode{atomic_ref} type's operations}@;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic_ref} type's operations are always lock free}@;
+    bool is_lock_free() const noexcept;
+
+    explicit atomic_ref(@\placeholder{floating-point}@&);
+    atomic_ref(const atomic_ref&) noexcept;
+    atomic_ref& operator=(const atomic_ref&) = delete;
+
+    void store(@\placeholdernc{floating-point}@, memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholder{floating-point}@ operator=(@\placeholder{floating-point}@) const noexcept;
+    @\placeholder{floating-point}@ load(memory_order = memory_order_seq_cst) const noexcept;
+    operator @\placeholdernc{floating-point}@() const noexcept;
+
+    @\placeholder{floating-point}@ exchange(@\placeholdernc{floating-point}@,
+                            memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order, memory_order) const noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order, memory_order) const noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order = memory_order_seq_cst) const noexcept;
+
+    @\placeholder{floating-point}@ fetch_add(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) const noexcept;
+    @\placeholder{floating-point}@ fetch_sub(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) const noexcept;
+
+    @\placeholder{floating-point}@ operator+=(@\placeholder{floating-point}@) const noexcept;
+    @\placeholder{floating-point}@ operator-=(@\placeholder{floating-point}@) const noexcept;
+
+    void wait(@\placeholdernc{floating-point}@, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() const noexcept;
+    void notify_all() const noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+Descriptions are provided below only for members
+that differ from the primary template.
+
+\pnum
+The following operations perform arithmetic computations.
+The key, operator, and computation correspondence are identified
+in \tref{atomic.types.int.comp}.
+
+\indexlibrarymember{fetch_add}{atomic_ref<\placeholder{floating-point}>}%
+\indexlibrarymember{fetch_sub}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+@\placeholder{floating-point}@ fetch_@\placeholdernc{key}@(@\placeholder{floating-point}@ operand,
+                          memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value referenced by \tcode{*ptr} with
+the result of the computation applied to the value referenced by \tcode{*ptr}
+and the given operand.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.races}.
+
+\pnum
+\returns
+Atomically, the value referenced by \tcode{*ptr}
+immediately before the effects.
+
+\pnum
+\remarks
+If the result is not a representable value for its type\iref{expr.pre},
+the result is unspecified,
+but the operations otherwise have no undefined behavior.
+Atomic arithmetic operations on \tcode{\placeholder{floating-point}} should conform to
+the \tcode{std::numeric_limits<\placeholder{floating-point}>} traits
+associated with the floating-point type\iref{limits.syn}.
+The floating-point environment\iref{cfenv}
+for atomic arithmetic operations on \tcode{\placeholder{floating-point}}
+may be different than the calling thread's floating-point environment.
+\end{itemdescr}
+
+\indexlibrarymember{operator+=}{atomic_ref<\placeholder{floating-point}>}%
+\indexlibrarymember{operator-=}{atomic_ref<\placeholder{floating-point}>}%
+\begin{itemdecl}
+@\placeholder{floating-point}@ operator @\placeholder{op}@=(@\placeholder{floating-point}@ operand) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\effects
+Equivalent to:
+\tcode{return fetch_\placeholder{key}(operand) \placeholdernc{op} operand;}
+\end{itemdescr}
+
+\rSec2[atomics.ref.pointer]{Partial specialization for pointers}
+\indexlibraryglobal{atomic_ref<T*>}%
+
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic_ref<T*> {
+  private:
+    T** ptr;        // \expos
+  public:
+    using value_type = T*;
+    using difference_type = ptrdiff_t;
+    static constexpr size_t required_alignment = @\impdefx{required alignment for \tcode{atomic_ref} type's operations}@;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic_ref} type's operations are always lock free}@;
+    bool is_lock_free() const noexcept;
+
+    explicit atomic_ref(T*&);
+    atomic_ref(const atomic_ref&) noexcept;
+    atomic_ref& operator=(const atomic_ref&) = delete;
+
+    void store(T*, memory_order = memory_order_seq_cst) const noexcept;
+    T* operator=(T*) const noexcept;
+    T* load(memory_order = memory_order_seq_cst) const noexcept;
+    operator T*() const noexcept;
+
+    T* exchange(T*, memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order, memory_order) const noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order, memory_order) const noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order_seq_cst) const noexcept;
+
+    T* fetch_add(difference_type, memory_order = memory_order_seq_cst) const noexcept;
+    T* fetch_sub(difference_type, memory_order = memory_order_seq_cst) const noexcept;
+
+    T* operator++(int) const noexcept;
+    T* operator--(int) const noexcept;
+    T* operator++() const noexcept;
+    T* operator--() const noexcept;
+    T* operator+=(difference_type) const noexcept;
+    T* operator-=(difference_type) const noexcept;
+
+    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() const noexcept;
+    void notify_all() const noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+Descriptions are provided below only for members
+that differ from the primary template.
+
+\pnum
+The following operations perform arithmetic computations.
+The key, operator, and computation correspondence is identified
+in \tref{atomic.types.pointer.comp}.
+
+\indexlibrarymember{fetch_add}{atomic_ref<T*>}%
+\indexlibrarymember{fetch_sub}{atomic_ref<T*>}%
+\begin{itemdecl}
+T* fetch_@\placeholdernc{key}@(difference_type operand, memory_order order = memory_order_seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\mandates
+\tcode{T} is a complete object type.
+
+\pnum
+\effects
+Atomically replaces the value referenced by \tcode{*ptr} with
+the result of the computation applied to the value referenced by \tcode{*ptr}
+and the given operand.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.races}.
+
+\pnum
+\returns
+Atomically, the value referenced by \tcode{*ptr}
+immediately before the effects.
+
+\pnum
+\remarks
+The result may be an undefined address,
+but the operations otherwise have no undefined behavior.
+\end{itemdescr}
+
+\indexlibrarymember{operator+=}{atomic_ref<T*>}%
+\indexlibrarymember{operator-=}{atomic_ref<T*>}%
+\begin{itemdecl}
+T* operator @\placeholder{op}@=(difference_type operand) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\tcode{return fetch_\placeholder{key}(operand) \placeholdernc{op} operand;}
+\end{itemdescr}
+
+\rSec2[atomics.ref.memop]{Member operators
+                          common to integers and pointers to objects}
+
+\indexlibrarymember{operator++}{atomic_ref<T*>}%
+\indexlibrarymember{operator++}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+value_type operator++(int) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_add(1);}
+\end{itemdescr}
+
+\indexlibrarymember{operator\dcr}{atomic_ref<T*>}%
+\indexlibrarymember{operator\dcr}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+value_type operator--(int) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_sub(1);}
+\end{itemdescr}
+
+\indexlibrarymember{operator++}{atomic_ref<T*>}%
+\indexlibrarymember{operator++}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+value_type operator++() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_add(1) + 1;}
+\end{itemdescr}
+
+\indexlibrarymember{operator\dcr}{atomic_ref<T*>}%
+\indexlibrarymember{operator\dcr}{atomic_ref<\placeholder{integral}>}%
+\begin{itemdecl}
+value_type operator--() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_sub(1) - 1;}
+\end{itemdescr}
+
+\rSec1[atomics.types.generic]{Class template \tcode{atomic}}
+
+\indexlibraryglobal{atomic}%
+\indexlibrarymember{value_type}{atomic}%
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic {
+    using value_type = T;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
     bool is_lock_free() const volatile noexcept;
     bool is_lock_free() const noexcept;
-    static constexpr bool is_always_lock_free = @\impdef{}@;
-    void store(T, memory_order = memory_order_seq_cst) volatile noexcept;
-    void store(T, memory_order = memory_order_seq_cst) noexcept;
-    T load(memory_order = memory_order_seq_cst) const volatile noexcept;
-    T load(memory_order = memory_order_seq_cst) const noexcept;
-    operator T() const volatile noexcept;
-    operator T() const noexcept;
-    T exchange(T, memory_order = memory_order_seq_cst) volatile noexcept;
-    T exchange(T, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_weak(T&, T, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_weak(T&, T, memory_order, memory_order) noexcept;
-    bool compare_exchange_strong(T&, T, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_strong(T&, T, memory_order, memory_order) noexcept;
-    bool compare_exchange_weak(T&, T, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_weak(T&, T, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_strong(T&, T, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_strong(T&, T, memory_order = memory_order_seq_cst) noexcept;
 
-    atomic() noexcept = default;
+    // \ref{atomics.types.operations}, operations on atomic types
+    constexpr atomic() noexcept(is_nothrow_default_constructible_v<T>);
     constexpr atomic(T) noexcept;
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
+
+    T load(memory_order = memory_order::seq_cst) const volatile noexcept;
+    T load(memory_order = memory_order::seq_cst) const noexcept;
+    operator T() const volatile noexcept;
+    operator T() const noexcept;
+    void store(T, memory_order = memory_order::seq_cst) volatile noexcept;
+    void store(T, memory_order = memory_order::seq_cst) noexcept;
     T operator=(T) volatile noexcept;
     T operator=(T) noexcept;
-  };
 
-  template <> struct atomic<@\textit{integral}@> {
+    T exchange(T, memory_order = memory_order::seq_cst) volatile noexcept;
+    T exchange(T, memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_weak(T&, T, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak(T&, T, memory_order, memory_order) noexcept;
+    bool compare_exchange_strong(T&, T, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong(T&, T, memory_order, memory_order) noexcept;
+    bool compare_exchange_weak(T&, T, memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_weak(T&, T, memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(T&, T, memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_strong(T&, T, memory_order = memory_order::seq_cst) noexcept;
+
+    void wait(T, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(T, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
+  };
+}
+\end{codeblock}
+
+\indexlibraryglobal{atomic}%
+\pnum
+The template argument for \tcode{T} shall meet the
+\oldconcept{CopyConstructible} and \oldconcept{CopyAssignable} requirements.
+The program is ill-formed if any of
+\begin{itemize}
+\item \tcode{is_trivially_copyable_v<T>},
+\item \tcode{is_copy_constructible_v<T>},
+\item \tcode{is_move_constructible_v<T>},
+\item \tcode{is_copy_assignable_v<T>}, or
+\item \tcode{is_move_assignable_v<T>}
+\end{itemize}
+is \tcode{false}.
+\begin{note}
+Type arguments that are
+not also statically initializable may be difficult to use.
+\end{note}
+
+\pnum
+The specialization \tcode{atomic<bool>} is a standard-layout struct.
+
+\pnum
+\begin{note}
+The representation of an atomic specialization
+need not have the same size and alignment requirement as
+its corresponding argument type.
+\end{note}
+
+\rSec2[atomics.types.operations]{Operations on atomic types}
+
+\pnum
+\begin{note}
+Many operations are volatile-qualified. The ``volatile as device register''
+semantics have not changed in the standard. This qualification means that volatility is
+preserved when applying these operations to volatile objects. It does not mean that
+operations on non-volatile objects become volatile.
+\end{note}
+
+\indexlibraryctor{atomic}%
+\indexlibraryctor{atomic<T*>}%
+\indexlibrary{\idxcode{atomic<\placeholder{integral}>}!constructor}%
+\indexlibrary{\idxcode{atomic<\placeholder{floating-point}>}!constructor}%
+\begin{itemdecl}
+constexpr atomic() noexcept(is_nothrow_default_constructible_v<T>);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\mandates
+\tcode{is_default_constructible_v<T>} is \tcode{true}.
+
+\pnum
+\effects
+Initializes the atomic object with the value of \tcode{T()}.
+Initialization is not an atomic operation\iref{intro.multithread}.
+\end{itemdescr}
+
+\indexlibraryctor{atomic}%
+\indexlibraryctor{atomic<T*>}%
+\indexlibrary{\idxcode{atomic<\placeholder{integral}>}!constructor}%
+\indexlibrary{\idxcode{atomic<\placeholder{floating-point}>}!constructor}%
+\begin{itemdecl}
+constexpr atomic(T desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes the object with the value \tcode{desired}.
+Initialization is not an atomic operation\iref{intro.multithread}.
+\begin{note}
+It is possible to have an access to an atomic object \tcode{A}
+race with its construction, for example by communicating the address of the
+just-constructed object \tcode{A} to another thread via
+\tcode{memory_order::relaxed} operations on a suitable atomic pointer
+variable, and then immediately accessing \tcode{A} in the receiving thread.
+This results in undefined behavior.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{is_always_lock_free}{atomic}%
+\indexlibrarymember{is_always_lock_free}{atomic<T*>}%
+\indexlibrarymember{is_always_lock_free}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{is_always_lock_free}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{static} data member \tcode{is_always_lock_free} is \tcode{true}
+if the atomic type's operations are always lock-free, and \tcode{false} otherwise.
+\begin{note}
+The value of \tcode{is_always_lock_free} is consistent with the value of
+the corresponding \tcode{ATOMIC_..._LOCK_FREE} macro, if defined.
+\end{note}
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_is_lock_free}%
+\indexlibrarymember{is_lock_free}{atomic}%
+\indexlibrarymember{is_lock_free}{atomic<T*>}%
+\indexlibrarymember{is_lock_free}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{is_lock_free}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+bool is_lock_free() const volatile noexcept;
+bool is_lock_free() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{true} if the object's operations are lock-free, \tcode{false} otherwise.
+\begin{note}
+The return value of the \tcode{is_lock_free} member function
+is consistent with the value of \tcode{is_always_lock_free} for the same type.
+\end{note}
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_store}%
+\indexlibraryglobal{atomic_store_explicit}%
+\indexlibrarymember{store}{atomic}%
+\indexlibrarymember{store}{atomic<T*>}%
+\indexlibrarymember{store}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{store}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+void store(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+void store(T desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{order} argument is neither \tcode{memory_order::consume},
+\tcode{memory_order::acquire}, nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Atomically replaces the value pointed to by \tcode{this}
+with the value of \tcode{desired}. Memory is affected according to the value of
+\tcode{order}.
+\end{itemdescr}
+
+\indexlibrarymember{operator=}{atomic}%
+\indexlibrarymember{operator=}{atomic<T*>}%
+\indexlibrarymember{operator=}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator=}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T operator=(T desired) volatile noexcept;
+T operator=(T desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to \tcode{store(desired)}.
+
+\pnum
+\returns
+\tcode{desired}.
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_load}%
+\indexlibraryglobal{atomic_load_explicit}%
+\indexlibrarymember{load}{atomic}%
+\indexlibrarymember{load}{atomic<T*>}%
+\indexlibrarymember{load}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{load}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
+T load(memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{order} argument is neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Memory is affected according to the value of \tcode{order}.
+
+\pnum
+\returns
+Atomically returns the value pointed to by \tcode{this}.
+\end{itemdescr}
+
+\indexlibrarymember{operator \placeholder{type}}{atomic}%
+\indexlibrarymember{operator T*}{atomic<T*>}%
+\indexlibrarymember{operator \placeholder{integral}}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator \placeholder{floating-point}}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+operator T() const volatile noexcept;
+operator T() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return load();}
+\end{itemdescr}
+
+
+\indexlibraryglobal{atomic_exchange}%
+\indexlibraryglobal{atomic_exchange_explicit}%
+\indexlibrarymember{exchange}{atomic}%
+\indexlibrarymember{exchange}{atomic<T*>}%
+\indexlibrarymember{exchange}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{exchange}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T exchange(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+T exchange(T desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value pointed to by \tcode{this}
+with \tcode{desired}.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.multithread}.
+
+\pnum
+\returns
+Atomically returns the value pointed to by \tcode{this} immediately before the effects.
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_compare_exchange_weak}%
+\indexlibraryglobal{atomic_compare_exchange_strong}%
+\indexlibraryglobal{atomic_compare_exchange_weak_explicit}%
+\indexlibraryglobal{atomic_compare_exchange_strong_explicit}%
+\indexlibrarymember{compare_exchange_weak}{atomic}%
+\indexlibrarymember{compare_exchange_weak}{atomic<T*>}%
+\indexlibrarymember{compare_exchange_weak}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{compare_exchange_weak}{atomic<\placeholder{floating-point}>}%
+\indexlibrarymember{compare_exchange_strong}{atomic}%
+\indexlibrarymember{compare_exchange_strong}{atomic<T*>}%
+\indexlibrarymember{compare_exchange_strong}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{compare_exchange_strong}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) volatile noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) volatile noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order::seq_cst) volatile noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order::seq_cst) volatile noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+The \tcode{failure} argument is neither \tcode{memory_order::release} nor
+\tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Retrieves the value in \tcode{expected}. It then atomically
+compares the value representation of the value pointed to by \tcode{this}
+for equality with that previously retrieved from \tcode{expected},
+and if true, replaces the value pointed to
+by \tcode{this} with that in \tcode{desired}.
+If and only if the comparison is true, memory is affected according to the
+value of \tcode{success}, and if the comparison is false, memory is affected according
+to the value of \tcode{failure}. When only one \tcode{memory_order} argument is
+supplied, the value of \tcode{success} is \tcode{order}, and the value of
+\tcode{failure} is \tcode{order} except that a value of \tcode{memory_order::acq_rel}
+shall be replaced by the value \tcode{memory_order::acquire} and a value of
+\tcode{memory_order::release} shall be replaced by the value
+\tcode{memory_order::relaxed}.
+If and only if the comparison is false then, after the atomic operation,
+the value in \tcode{expected} is replaced by the value
+pointed to by \tcode{this} during the atomic comparison.
+If the operation returns \tcode{true}, these
+operations are atomic read-modify-write
+operations\iref{intro.multithread} on the memory
+pointed to by \tcode{this}.
+Otherwise, these operations are atomic load operations on that memory.
+
+\pnum
+\returns
+The result of the comparison.
+
+\pnum
+\begin{note}
+For example, the effect of
+\tcode{compare_exchange_strong}
+on objects without padding bits\iref{basic.types} is
+\begin{codeblock}
+if (memcmp(this, &expected, sizeof(*this)) == 0)
+  memcpy(this, &desired, sizeof(*this));
+else
+  memcpy(expected, this, sizeof(*this));
+\end{codeblock}
+\end{note}
+\begin{example}
+The expected use of the compare-and-exchange operations is as follows. The
+compare-and-exchange operations will update \tcode{expected} when another iteration of
+the loop is needed.
+\begin{codeblock}
+expected = current.load();
+do {
+  desired = function(expected);
+} while (!current.compare_exchange_weak(expected, desired));
+\end{codeblock}
+\end{example}
+\begin{example}
+Because the expected value is updated only on failure,
+code releasing the memory containing the \tcode{expected} value on success will work.
+For example, list head insertion will act atomically and would not introduce a
+data race in the following code:
+\begin{codeblock}
+do {
+  p->next = head;                                   // make new list node point to the current head
+} while (!head.compare_exchange_weak(p->next, p));  // try to insert
+\end{codeblock}
+\end{example}
+
+\pnum
+Implementations should ensure that weak compare-and-exchange operations do not
+consistently return \tcode{false} unless either the atomic object has value
+different from \tcode{expected} or there are concurrent modifications to the
+atomic object.
+
+\pnum
+\remarks
+A weak compare-and-exchange operation may fail spuriously. That is, even when
+the contents of memory referred to by \tcode{expected} and \tcode{this} are
+equal, it may return \tcode{false} and store back to \tcode{expected} the same memory
+contents that were originally there.
+\begin{note}
+This
+spurious failure enables implementation of compare-and-exchange on a broader class of
+machines, e.g., load-locked store-conditional machines. A
+consequence of spurious failure is that nearly all uses of weak compare-and-exchange
+will be in a loop.
+When a compare-and-exchange is in a loop, the weak version will yield better performance
+on some platforms. When a weak compare-and-exchange would require a loop and a strong one
+would not, the strong one is preferable.
+\end{note}
+
+\pnum
+\begin{note}
+Under cases where the \tcode{memcpy} and \tcode{memcmp} semantics of the compare-and-exchange
+operations apply, the outcome might be failed comparisons for values that compare equal with
+\tcode{operator==} if the value representation has trap bits or alternate
+representations of the same value. Notably, on implementations conforming to
+ISO/IEC/IEEE 60559, floating-point \tcode{-0.0} and \tcode{+0.0}
+will not compare equal with \tcode{memcmp} but will compare equal with \tcode{operator==},
+and NaNs with the same payload will compare equal with \tcode{memcmp} but will not
+compare equal with \tcode{operator==}.
+\end{note}
+\begin{note}
+Because compare-and-exchange acts on an object's value representation,
+padding bits that never participate in the object's value representation
+are ignored. As a consequence, the following code is guaranteed to avoid
+spurious failure:
+\begin{codeblock}
+struct padded {
+  char clank = 0x42;
+  // Padding here.
+  unsigned biff = 0xC0DEFEFE;
+};
+atomic<padded> pad = {};
+
+bool zap() {
+  padded expected, desired{0, 0};
+  return pad.compare_exchange_strong(expected, desired);
+}
+\end{codeblock}
+\end{note}
+\begin{note}
+For a union with bits that participate in the value representation
+of some members but not others, compare-and-exchange might always fail.
+This is because such padding bits have an indeterminate value when they
+do not participate in the value representation of the active member.
+As a consequence, the following code is not guaranteed to ever succeed:
+\begin{codeblock}
+union pony {
+  double celestia = 0.;
+  short luna;       // padded
+};
+atomic<pony> princesses = {};
+
+bool party(pony desired) {
+  pony expected;
+  return princesses.compare_exchange_strong(expected, desired);
+}
+\end{codeblock}
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{wait}{atomic}%
+\indexlibrarymember{wait}{atomic<T*>}%
+\indexlibrarymember{wait}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{wait}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+void wait(T old, memory_order order = memory_order::seq_cst) const volatile noexcept;
+void wait(T old, memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+\tcode{order} is neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Repeatedly performs the following steps, in order:
+\begin{itemize}
+\item
+  Evaluates \tcode{load(order)} and
+  compares its value representation for equality against that of \tcode{old}.
+\item
+  If they compare unequal, returns.
+\item
+  Blocks until it
+  is unblocked by an atomic notifying operation or is unblocked spuriously.
+\end{itemize}
+
+\pnum
+\remarks
+This function is an atomic waiting operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_one}{atomic<T>}%
+\indexlibrarymember{notify_one}{atomic<T*>}%
+\indexlibrarymember{notify_one}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{notify_one}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+void notify_one() volatile noexcept;
+void notify_one() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of at least one atomic waiting operation
+that is eligible to be unblocked\iref{atomics.wait} by this call,
+if any such atomic waiting operations exist.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_all}{atomic<T>}%
+\indexlibrarymember{notify_all}{atomic<T*>}%
+\indexlibrarymember{notify_all}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{notify_all}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+void notify_all() volatile noexcept;
+void notify_all() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of all atomic waiting operations
+that are eligible to be unblocked\iref{atomics.wait} by this call.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\rSec2[atomics.types.int]{Specializations for integers}
+
+\indexlibrary{\idxcode{atomic<\placeholder{integral}>}}%
+\pnum
+There are specializations of the \tcode{atomic}
+class template for the integral types
+\tcode{char},
+\tcode{signed char},
+\tcode{unsigned char},
+\tcode{short},
+\tcode{unsigned short},
+\tcode{int},
+\tcode{unsigned int},
+\tcode{long},
+\tcode{unsigned long},
+\tcode{long long},
+\tcode{unsigned long long},
+\tcode{char8_t},
+\tcode{char16_t},
+\tcode{char32_t},
+\tcode{wchar_t},
+and any other types needed by the typedefs in the header \libheaderref{cstdint}.
+For each such type \tcode{\placeholder{integral}}, the specialization
+\tcode{atomic<\placeholder{integral}>} provides additional atomic operations appropriate to integral types.
+\begin{note}
+The specialization \tcode{atomic<bool>}
+uses the primary template\iref{atomics.types.generic}.
+\end{note}
+
+\begin{codeblock}
+namespace std {
+  template<> struct atomic<@\placeholder{integral}@> {
+    using value_type = @\placeholder{integral}@;
+    using difference_type = value_type;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
     bool is_lock_free() const volatile noexcept;
     bool is_lock_free() const noexcept;
-    static constexpr bool is_always_lock_free = @\impdef{}@;
-    void store(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    void store(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ load(memory_order = memory_order_seq_cst) const volatile noexcept;
-    @\textit{integral}@ load(memory_order = memory_order_seq_cst) const noexcept;
-    operator @\textit{integral()}@ const volatile noexcept;
-    operator @\textit{integral()}@ const noexcept;
-    @\textit{integral}@ exchange(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ exchange(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_weak(@\textit{integral}@&, @\textit{integral}@, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_weak(@\textit{integral}@&, @\textit{integral}@, memory_order, memory_order) noexcept;
-    bool compare_exchange_strong(@\textit{integral}@&, @\textit{integral}@, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_strong(@\textit{integral}@&, @\textit{integral}@, memory_order, memory_order) noexcept;
-    bool compare_exchange_weak(@\textit{integral}@&, @\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_weak(@\textit{integral}@&, @\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_strong(@\textit{integral}@&, @\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_strong(@\textit{integral}@&, @\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ fetch_add(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ fetch_add(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ fetch_sub(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ fetch_sub(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ fetch_and(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ fetch_and(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ fetch_or(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ fetch_or(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
-    @\textit{integral}@ fetch_xor(@\textit{integral}@, memory_order = memory_order_seq_cst) volatile noexcept;
-    @\textit{integral}@ fetch_xor(@\textit{integral}@, memory_order = memory_order_seq_cst) noexcept;
 
-    atomic() noexcept = default;
-    constexpr atomic(@\textit{integral}@) noexcept;
+    constexpr atomic() noexcept;
+    constexpr atomic(@\placeholdernc{integral}@) noexcept;
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
-    @\textit{integral}@ operator=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator=(@\textit{integral}@) noexcept;
 
-    @\textit{integral}@ operator++(int) volatile noexcept;
-    @\textit{integral}@ operator++(int) noexcept;
-    @\textit{integral}@ operator--(int) volatile noexcept;
-    @\textit{integral}@ operator--(int) noexcept;
-    @\textit{integral}@ operator++() volatile noexcept;
-    @\textit{integral}@ operator++() noexcept;
-    @\textit{integral}@ operator--() volatile noexcept;
-    @\textit{integral}@ operator--() noexcept;
-    @\textit{integral}@ operator+=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator+=(@\textit{integral}@) noexcept;
-    @\textit{integral}@ operator-=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator-=(@\textit{integral}@) noexcept;
-    @\textit{integral}@ operator&=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator&=(@\textit{integral}@) noexcept;
-    @\textit{integral}@ operator|=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator|=(@\textit{integral}@) noexcept;
-    @\textit{integral}@ operator^=(@\textit{integral}@) volatile noexcept;
-    @\textit{integral}@ operator^=(@\textit{integral}@) noexcept;
+    void store(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    void store(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    @\placeholdernc{integral}@ operator=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator=(@\placeholdernc{integral}@) noexcept;
+    @\placeholdernc{integral}@ load(memory_order = memory_order::seq_cst) const volatile noexcept;
+    @\placeholdernc{integral}@ load(memory_order = memory_order::seq_cst) const noexcept;
+    operator @\placeholdernc{integral}@() const volatile noexcept;
+    operator @\placeholdernc{integral}@() const noexcept;
+
+    @\placeholdernc{integral}@ exchange(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ exchange(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                               memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                               memory_order, memory_order) noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                                 memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                                 memory_order, memory_order) noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                               memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_weak(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                               memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                                 memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_strong(@\placeholder{integral}@&, @\placeholdernc{integral}@,
+                                 memory_order = memory_order::seq_cst) noexcept;
+
+    @\placeholdernc{integral}@ fetch_add(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ fetch_add(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    @\placeholdernc{integral}@ fetch_sub(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ fetch_sub(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    @\placeholdernc{integral}@ fetch_and(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ fetch_and(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    @\placeholdernc{integral}@ fetch_or(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ fetch_or(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+    @\placeholdernc{integral}@ fetch_xor(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) volatile noexcept;
+    @\placeholdernc{integral}@ fetch_xor(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) noexcept;
+
+    @\placeholdernc{integral}@ operator++(int) volatile noexcept;
+    @\placeholdernc{integral}@ operator++(int) noexcept;
+    @\placeholdernc{integral}@ operator--(int) volatile noexcept;
+    @\placeholdernc{integral}@ operator--(int) noexcept;
+    @\placeholdernc{integral}@ operator++() volatile noexcept;
+    @\placeholdernc{integral}@ operator++() noexcept;
+    @\placeholdernc{integral}@ operator--() volatile noexcept;
+    @\placeholdernc{integral}@ operator--() noexcept;
+    @\placeholdernc{integral}@ operator+=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator+=(@\placeholdernc{integral}@) noexcept;
+    @\placeholdernc{integral}@ operator-=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator-=(@\placeholdernc{integral}@) noexcept;
+    @\placeholdernc{integral}@ operator&=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator&=(@\placeholdernc{integral}@) noexcept;
+    @\placeholdernc{integral}@ operator|=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator|=(@\placeholdernc{integral}@) noexcept;
+    @\placeholdernc{integral}@ operator^=(@\placeholdernc{integral}@) volatile noexcept;
+    @\placeholdernc{integral}@ operator^=(@\placeholdernc{integral}@) noexcept;
+
+    void wait(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(@\placeholdernc{integral}@, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
   };
+}
+\end{codeblock}
 
-  template <class T> struct atomic<T*> {
+\pnum
+The atomic integral specializations
+are standard-layout structs.
+They each have
+a trivial destructor.
+
+\pnum
+Descriptions are provided below only for members that differ from the primary template.
+
+\pnum
+The following operations perform arithmetic computations. The key, operator, and computation correspondence is:
+
+\begin{floattable}
+{Atomic arithmetic computations}{atomic.types.int.comp}{lll|lll}
+\hline
+\hdstyle{\tcode{\placeholder{key}}}   &
+  \hdstyle{Op}                        &
+  \hdstyle{Computation}               &
+\hdstyle{\tcode{\placeholder{key}}}   &
+  \hdstyle{Op}                        &
+  \hdstyle{Computation}  \\ \hline
+\tcode{add}       &
+  \tcode{+}       &
+  addition        &
+\tcode{sub}       &
+  \tcode{-}       &
+  subtraction     \\
+\tcode{or}        &
+  \tcode{|}       &
+  bitwise inclusive or  &
+\tcode{xor}       &
+  \tcode{\caret}        &
+  bitwise exclusive or  \\
+\tcode{and}       &
+  \tcode{\&}      &
+  bitwise and     &&&\\\hline
+\end{floattable}
+
+\indexlibraryglobal{atomic_fetch_add}%
+\indexlibraryglobal{atomic_fetch_and}%
+\indexlibraryglobal{atomic_fetch_or}%
+\indexlibraryglobal{atomic_fetch_sub}%
+\indexlibraryglobal{atomic_fetch_xor}%
+\indexlibraryglobal{atomic_fetch_add_explicit}%
+\indexlibraryglobal{atomic_fetch_and_explicit}%
+\indexlibraryglobal{atomic_fetch_or_explicit}%
+\indexlibraryglobal{atomic_fetch_sub_explicit}%
+\indexlibraryglobal{atomic_fetch_xor_explicit}%
+\indexlibrarymember{fetch_add}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{fetch_and}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{fetch_or}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{fetch_sub}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{fetch_xor}{atomic<\placeholder{integral}>}%
+\begin{itemdecl}
+T fetch_@\placeholdernc{key}@(T operand, memory_order order = memory_order::seq_cst) volatile noexcept;
+T fetch_@\placeholdernc{key}@(T operand, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value pointed to by
+\tcode{this} with the result of the computation applied to the
+value pointed to by \tcode{this} and the given \tcode{operand}.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.multithread}.
+
+\pnum
+\returns
+Atomically, the value pointed to by \tcode{this} immediately before the effects.
+
+\pnum
+\indextext{signed integer representation!two's complement}%
+\remarks
+For signed integer types,
+the result is as if the object value and parameters
+were converted to their corresponding unsigned types,
+the computation performed on those types, and
+the result converted back to the signed type.
+\begin{note}
+There are no undefined results arising from the computation.
+\end{note}
+
+\end{itemdescr}
+
+\indexlibrarymember{operator+=}{atomic<T*>}%
+\indexlibrarymember{operator-=}{atomic<T*>}%
+\indexlibrarymember{operator+=}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator-=}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator\&=}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator"|=}{atomic<\placeholder{integral}>}%
+\indexlibrarymember{operator\caret=}{atomic<\placeholder{integral}>}%
+\begin{itemdecl}
+T operator @\placeholder{op}@=(T operand) volatile noexcept;
+T operator @\placeholder{op}@=(T operand) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_\placeholder{key}(operand) \placeholder{op} operand;}
+\end{itemdescr}
+
+\rSec2[atomics.types.float]{Specializations for floating-point types}
+
+\indexlibrary{\idxcode{atomic<\placeholder{floating-point}>}}%
+\pnum
+There are specializations of the \tcode{atomic}
+class template for the floating-point types
+\tcode{float},
+\tcode{double}, and
+\tcode{long double}.
+For each such type \tcode{\placeholdernc{floating-point}},
+the specialization \tcode{atomic<\placeholder{floating-point}>}
+provides additional atomic operations appropriate to floating-point types.
+
+\begin{codeblock}
+namespace std {
+  template<> struct atomic<@\placeholder{floating-point}@> {
+    using value_type = @\placeholdernc{floating-point}@;
+    using difference_type = value_type;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
     bool is_lock_free() const volatile noexcept;
     bool is_lock_free() const noexcept;
-    static constexpr bool is_always_lock_free = @\impdef{}@;
-    void store(T*, memory_order = memory_order_seq_cst) volatile noexcept;
-    void store(T*, memory_order = memory_order_seq_cst) noexcept;
-    T* load(memory_order = memory_order_seq_cst) const volatile noexcept;
-    T* load(memory_order = memory_order_seq_cst) const noexcept;
-    operator T*() const volatile noexcept;
-    operator T*() const noexcept;
-    T* exchange(T*, memory_order = memory_order_seq_cst) volatile noexcept;
-    T* exchange(T*, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) noexcept;
-    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) volatile noexcept;
-    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) noexcept;
-    bool compare_exchange_weak(T*&, T*, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_weak(T*&, T*, memory_order = memory_order_seq_cst) noexcept;
-    bool compare_exchange_strong(T*&, T*, memory_order = memory_order_seq_cst) volatile noexcept;
-    bool compare_exchange_strong(T*&, T*, memory_order = memory_order_seq_cst) noexcept;
-    T* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst) volatile noexcept;
-    T* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst) noexcept;
-    T* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst) volatile noexcept;
-    T* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst) noexcept;
 
-    atomic() noexcept = default;
+    constexpr atomic() noexcept;
+    constexpr atomic(@\placeholder{floating-point}@) noexcept;
+    atomic(const atomic&) = delete;
+    atomic& operator=(const atomic&) = delete;
+    atomic& operator=(const atomic&) volatile = delete;
+
+    void store(@\placeholdernc{floating-point}@, memory_order = memory_order_seq_cst) volatile noexcept;
+    void store(@\placeholdernc{floating-point}@, memory_order = memory_order_seq_cst) noexcept;
+    @\placeholdernc{floating-point}@ operator=(@\placeholder{floating-point}@) volatile noexcept;
+    @\placeholdernc{floating-point}@ operator=(@\placeholder{floating-point}@) noexcept;
+    @\placeholdernc{floating-point}@ load(memory_order = memory_order_seq_cst) volatile noexcept;
+    @\placeholdernc{floating-point}@ load(memory_order = memory_order_seq_cst) noexcept;
+    operator @\placeholdernc{floating-point}@() volatile noexcept;
+    operator @\placeholdernc{floating-point}@() noexcept;
+
+    @\placeholdernc{floating-point}@ exchange(@\placeholdernc{floating-point}@,
+                            memory_order = memory_order_seq_cst) volatile noexcept;
+    @\placeholdernc{floating-point}@ exchange(@\placeholdernc{floating-point}@,
+                            memory_order = memory_order_seq_cst) noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order, memory_order) noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order, memory_order) noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order = memory_order_seq_cst) volatile noexcept;
+    bool compare_exchange_weak(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                               memory_order = memory_order_seq_cst) noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order = memory_order_seq_cst) volatile noexcept;
+    bool compare_exchange_strong(@\placeholder{floating-point}@&, @\placeholdernc{floating-point}@,
+                                 memory_order = memory_order_seq_cst) noexcept;
+
+    @\placeholdernc{floating-point}@ fetch_add(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) volatile noexcept;
+    @\placeholdernc{floating-point}@ fetch_add(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) noexcept;
+    @\placeholdernc{floating-point}@ fetch_sub(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) volatile noexcept;
+    @\placeholdernc{floating-point}@ fetch_sub(@\placeholdernc{floating-point}@,
+                             memory_order = memory_order_seq_cst) noexcept;
+
+    @\placeholdernc{floating-point}@ operator+=(@\placeholder{floating-point}@) volatile noexcept;
+    @\placeholdernc{floating-point}@ operator+=(@\placeholder{floating-point}@) noexcept;
+    @\placeholdernc{floating-point}@ operator-=(@\placeholder{floating-point}@) volatile noexcept;
+    @\placeholdernc{floating-point}@ operator-=(@\placeholder{floating-point}@) noexcept;
+
+    void wait(@\placeholdernc{floating-point}@, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(@\placeholdernc{floating-point}@, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
+  };
+}
+\end{codeblock}
+
+\pnum
+The atomic floating-point specializations
+are standard-layout structs.
+They each have
+a trivial destructor.
+
+\pnum
+Descriptions are provided below only for members that differ from the primary template.
+
+\pnum
+The following operations perform arithmetic addition and subtraction computations.
+The key, operator, and computation correspondence are identified in
+\tref{atomic.types.int.comp}.
+
+\indexlibraryglobal{atomic_fetch_add}%
+\indexlibraryglobal{atomic_fetch_sub}%
+\indexlibraryglobal{atomic_fetch_add_explicit}%
+\indexlibraryglobal{atomic_fetch_sub_explicit}%
+\indexlibrarymember{fetch_add}{atomic<\placeholder{floating-point}>}%
+\indexlibrarymember{fetch_sub}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T A::fetch_@\placeholdernc{key}@(T operand, memory_order order = memory_order_seq_cst) volatile noexcept;
+T A::fetch_@\placeholdernc{key}@(T operand, memory_order order = memory_order_seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces the value pointed to by \tcode{this}
+with the result of the computation applied to the value pointed
+to by \tcode{this} and the given \tcode{operand}.
+Memory is affected according to the value of \tcode{order}.
+These operations are atomic read-modify-write operations\iref{intro.multithread}.
+
+\pnum
+\returns
+Atomically, the value pointed to by \tcode{this} immediately before the effects.
+
+\pnum
+\remarks
+If the result is not a representable value for its type\iref{expr.pre}
+the result is unspecified, but the operations otherwise have no undefined
+behavior. Atomic arithmetic operations on \tcode{\placeholder{floating-point}}
+should conform to the \tcode{std::numeric_limits<\placeholder{floating-point}>}
+traits associated with the floating-point type\iref{limits.syn}.
+The floating-point environment\iref{cfenv} for atomic arithmetic operations
+on \tcode{\placeholder{floating-point}} may be different than the
+calling thread's floating-point environment.
+\end{itemdescr}
+
+\indexlibrarymember{operator+=}{atomic<T*>}%
+\indexlibrarymember{operator-=}{atomic<T*>}%
+\indexlibrarymember{operator+=}{atomic<\placeholder{floating-point}>}%
+\indexlibrarymember{operator-=}{atomic<\placeholder{floating-point}>}%
+\begin{itemdecl}
+T operator @\placeholder{op}@=(T operand) volatile noexcept;
+T operator @\placeholder{op}@=(T operand) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return fetch_\placeholder{key}(operand) \placeholder{op} operand;}
+
+\pnum
+\remarks
+If the result is not a representable value for its type\iref{expr.pre}
+the result is unspecified, but the operations otherwise have no undefined
+behavior. Atomic arithmetic operations on \tcode{\placeholder{floating-point}}
+should conform to the \tcode{std::numeric_limits<\placeholder{floating-point}>}
+traits associated with the floating-point type\iref{limits.syn}.
+The floating-point environment\iref{cfenv} for atomic arithmetic operations
+on \tcode{\placeholder{floating-point}} may be different than the
+calling thread's floating-point environment.
+\end{itemdescr}
+
+\rSec2[atomics.types.pointer]{Partial specialization for pointers}
+\indexlibraryglobal{atomic<T*>}%
+
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic<T*> {
+    using value_type = T*;
+    using difference_type = ptrdiff_t;
+
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
+    bool is_lock_free() const volatile noexcept;
+    bool is_lock_free() const noexcept;
+
+    constexpr atomic() noexcept;
     constexpr atomic(T*) noexcept;
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
+
+    void store(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    void store(T*, memory_order = memory_order::seq_cst) noexcept;
     T* operator=(T*) volatile noexcept;
     T* operator=(T*) noexcept;
+    T* load(memory_order = memory_order::seq_cst) const volatile noexcept;
+    T* load(memory_order = memory_order::seq_cst) const noexcept;
+    operator T*() const volatile noexcept;
+    operator T*() const noexcept;
+
+    T* exchange(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* exchange(T*, memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) noexcept;
+    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order::seq_cst) noexcept;
+
+    T* fetch_add(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_add(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
+    T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
 
     T* operator++(int) volatile noexcept;
     T* operator++(int) noexcept;
@@ -563,544 +2490,32 @@ namespace std {
     T* operator+=(ptrdiff_t) noexcept;
     T* operator-=(ptrdiff_t) volatile noexcept;
     T* operator-=(ptrdiff_t) noexcept;
+
+    void wait(T*, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
   };
 }
 \end{codeblock}
 
+\indexlibraryglobal{atomic<T*>}%
 \pnum
-There is a generic class template \tcode{atomic<T>}. The type of the template argument
-\tcode{T} shall be trivially copyable~(\ref{basic.types}). \begin{note} Type arguments that are
-not also statically initializable may be difficult to use. \end{note}
-
-\pnum
-The semantics of the operations on specializations of \tcode{atomic} are defined
-in~\ref{atomics.types.operations}.
+There is a partial specialization of the \tcode{atomic} class template for pointers.
+Specializations of this partial specialization are standard-layout structs.
+They each have a trivial destructor.
 
 \pnum
-Specializations and instantiations of the \tcode{atomic} template shall have a deleted copy constructor, a deleted
-copy assignment operator, and a constexpr value constructor.
+Descriptions are provided below only for members that differ from the primary template.
 
 \pnum
-There shall be explicit specializations of the \tcode{atomic}
-template for the integral types
-\tcode{char},
-\tcode{signed char},
-\tcode{unsigned char},
-\tcode{short},
-\tcode{unsigned short},
-\tcode{int},
-\tcode{unsigned int},
-\tcode{long},
-\tcode{unsigned long},
-\tcode{long long},
-\tcode{unsigned long long},
-\tcode{char16_t},
-\tcode{char32_t},
-\tcode{wchar_t},
-and any other types needed by the typedefs in the header \tcode{<cstdint>}.
-For each integral type \textit{integral}, the specialization
-\tcode{atomic<integral>} provides additional atomic operations appropriate to integral types.
-There shall be a specialization \tcode{atomic<bool>} which provides the general
-atomic operations as specified in \ref{atomics.types.operations.general}.
-
-\pnum
-The atomic integral specializations and the specialization \tcode{atomic<bool>}
-shall have standard layout. They shall each have a trivial default constructor
-and a trivial destructor. They shall each support aggregate initialization
-syntax.
-
-\pnum
-There shall be pointer partial specializations of the \tcode{atomic} class template.
-These specializations shall have standard layout, trivial default constructors, and trivial destructors.
-They shall each support aggregate initialization syntax.
-
-\pnum
-There shall be named types corresponding to the integral specializations of
-\tcode{atomic}, as specified in Table~\ref{tab:atomics.integral}, and a named type
-\tcode{atomic_bool} corresponding to the specified \tcode{atomic<bool>}. Each named
-type is either a typedef to the corresponding specialization or a base class of the
-corresponding specialization. If it is a base class, it shall support the same
-member functions as the corresponding specialization.
-
-\begin{floattablebase}
-{Named atomic types}{tab:atomics.integral}{ll}{ht}
-\hline
-\textbf{Named atomic type} & \textbf{Corresponding non-atomic type} \\ \hline
-\tcode{atomic_char}     & \tcode{char}                    \\
-\tcode{atomic_schar}    & \tcode{signed char}             \\
-\tcode{atomic_uchar}    & \tcode{unsigned char}           \\
-\tcode{atomic_short}    & \tcode{short}                   \\
-\tcode{atomic_ushort}   & \tcode{unsigned short}          \\
-\tcode{atomic_int}      & \tcode{int}                     \\
-\tcode{atomic_uint}     & \tcode{unsigned int}            \\
-\tcode{atomic_long}     & \tcode{long}                    \\
-\tcode{atomic_ulong}    & \tcode{unsigned long}           \\
-\tcode{atomic_llong}    & \tcode{long long}               \\
-\tcode{atomic_ullong}   & \tcode{unsigned long long}      \\
-\tcode{atomic_char16_t} & \tcode{char16_t}                \\
-\tcode{atomic_char32_t} & \tcode{char32_t}                \\
-\tcode{atomic_wchar_t}  & \tcode{wchar_t}                 \\
-\hline
-\end{floattablebase}
-
-\pnum
-There shall be atomic typedefs corresponding to non-atomic typedefs as
-specified in Table~\ref{tab:atomics.typedefs}.
-\tcode{atomic_int$N$_t}, \tcode{atomic_uint$N$_t},
-\tcode{atomic_intptr_t}, and \tcode{atomic_uintptr_t}
-shall be defined if and only if
-\tcode{int$N$_t}, \tcode{uint$N$_t},
-\tcode{intptr_t}, and \tcode{uintptr_t}
-are defined, respectively.
-
-\begin{floattablebase}
-{Atomic typedefs}{tab:atomics.typedefs}{ll}{ht}
-\hline
-\textbf{Atomic typedef} & \textbf{Corresponding non-atomic typedef} \\ \hline
-\tcode{atomic_int8_t}         & \tcode{int8_t}          \\
-\tcode{atomic_uint8_t}        & \tcode{uint8_t}         \\
-\tcode{atomic_int16_t}        & \tcode{int16_t}         \\
-\tcode{atomic_uint16_t}       & \tcode{uint16_t}        \\
-\tcode{atomic_int32_t}        & \tcode{int32_t}         \\
-\tcode{atomic_uint32_t}       & \tcode{uint32_t}        \\
-\tcode{atomic_int64_t}        & \tcode{int64_t}         \\
-\tcode{atomic_uint64_t}       & \tcode{uint64_t}        \\
-\tcode{atomic_int_least8_t}   & \tcode{int_least8_t}    \\
-\tcode{atomic_uint_least8_t}  & \tcode{uint_least8_t}   \\
-\tcode{atomic_int_least16_t}  & \tcode{int_least16_t}   \\
-\tcode{atomic_uint_least16_t} & \tcode{uint_least16_t}  \\
-\tcode{atomic_int_least32_t}  & \tcode{int_least32_t}   \\
-\tcode{atomic_uint_least32_t} & \tcode{uint_least32_t}  \\
-\tcode{atomic_int_least64_t}  & \tcode{int_least64_t}   \\
-\tcode{atomic_uint_least64_t} & \tcode{uint_least64_t}  \\
-\tcode{atomic_int_fast8_t}    & \tcode{int_fast8_t}     \\
-\tcode{atomic_uint_fast8_t}   & \tcode{uint_fast8_t}    \\
-\tcode{atomic_int_fast16_t}   & \tcode{int_fast16_t}    \\
-\tcode{atomic_uint_fast16_t}  & \tcode{uint_fast16_t}   \\
-\tcode{atomic_int_fast32_t}   & \tcode{int_fast32_t}    \\
-\tcode{atomic_uint_fast32_t}  & \tcode{uint_fast32_t}   \\
-\tcode{atomic_int_fast64_t}   & \tcode{int_fast64_t}    \\
-\tcode{atomic_uint_fast64_t}  & \tcode{uint_fast64_t}   \\
-\tcode{atomic_intptr_t}       & \tcode{intptr_t}        \\
-\tcode{atomic_uintptr_t}      & \tcode{uintptr_t}       \\
-\tcode{atomic_size_t}         & \tcode{size_t}          \\
-\tcode{atomic_ptrdiff_t}      & \tcode{ptrdiff_t}       \\
-\tcode{atomic_intmax_t}       & \tcode{intmax_t}        \\
-\tcode{atomic_uintmax_t}      & \tcode{uintmax_t}       \\
-\hline
-\end{floattablebase}
-
-\pnum
-\begin{note} The representation of an atomic specialization need not have the same size as its
-corresponding argument type. Specializations should have the same size whenever possible, as
-this reduces the effort required to port existing code. \end{note}
-
-\rSec1[atomics.types.operations]{Operations on atomic types}
-
-\rSec2[atomics.types.operations.general]{General operations on atomic types}
-
-\pnum
-The implementation shall provide the functions and function templates identified as ``general operations
-on atomic types'' in~\ref{atomics.syn}.
-
-\pnum
-In the declarations of these functions and function templates, the name
-\textit{atomic-type} refers to either \tcode{atomic<T>} or to a named base class for \tcode{T}
-from Table~\ref{tab:atomics.integral} or inferred from Table~\ref{tab:atomics.typedefs}.
-
-\rSec2[atomics.types.operations.templ]{Templated operations on atomic types}
-
-\pnum
-The implementation shall declare but not define the
-function templates identified as ``templated operations on atomic types'' in~\ref{atomics.syn}.
-
-\rSec2[atomics.types.operations.arith]{Arithmetic operations on atomic types}
-
-\pnum
-The implementation shall provide the functions and function template specializations identified as ``arithmetic operations
-on atomic types'' in~\ref{atomics.syn}.
-
-\pnum
-In the declarations of these functions and function template specializations, the name \textit{integral} refers to an
-integral type and the name \textit{atomic-integral} refers to either
-\tcode{atomic<\textit{integral}>} or to a named base class for \tcode{\textit{integral}} from
-Table~\ref{tab:atomics.integral} or inferred from Table~\ref{tab:atomics.typedefs}.
-
-\rSec2[atomics.types.operations.pointer]{Operations on atomic pointer types}
-
-\pnum
-The implementation shall provide the function template specializations
-identified as ``partial specializations for pointers'' in~\ref{atomics.syn}.
-
-\rSec2[atomics.types.operations.req]{Requirements for operations on atomic types}
-
-\pnum
-There are only a few kinds of operations on atomic types, though there are many
-instances on those kinds. This section specifies each general kind. The specific
-instances are defined in 
-\ref{atomics.types.generic}, \ref{atomics.types.operations.general},
-\ref{atomics.types.operations.arith}, and \ref{atomics.types.operations.pointer}.
-
-\pnum
-In the following operation definitions:
-
-\begin{itemize}
-\item  an \textit{A} refers to one of the atomic types.
-\item a \textit{C} refers to its corresponding non-atomic type.
-\item an \textit{M} refers to type of the other argument for arithmetic operations. For
-integral atomic types, \textit{M} is \textit{C}. For atomic address types, \textit{M} is
-\tcode{std::ptrdiff_t}.
-\item the non-member functions not ending in \tcode{_explicit} have the semantics of their
-corresponding \tcode{_explicit} functions with \tcode{memory_order} arguments of
-\tcode{memory_order_seq_cst}.
-\end{itemize}
-
-\pnum
-\begin{note} Many operations are volatile-qualified. The ``volatile as device register''
-semantics have not changed in the standard. This qualification means that volatility is
-preserved when applying these operations to volatile objects. It does not mean that
-operations on non-volatile objects become volatile. Thus, volatile qualified operations
-on non-volatile objects may be merged under some conditions. \end{note}
-
-\indexlibrary{\idxcode{atomic type}!constructor}%
-\begin{itemdecl}
-@\placeholdernc{A}@::@\placeholdernc{A}@() noexcept = default;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Leaves the atomic object in an uninitialized state.
-\begin{note}
-These semantics ensure compatibility with C.
-\end{note}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic type}!constructor}%
-\begin{itemdecl}
-constexpr @\placeholdernc{A}@::@\placeholdernc{A}@(@\placeholdernc{C}@ desired) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Initializes the object with the value \tcode{desired}.
-Initialization is not an atomic operation~(\ref{intro.multithread}).
-\begin{note} it is possible to have an access to an atomic object \tcode{A}
-race with its construction, for example by communicating the address of the
-just-constructed object \tcode{A} to another thread via
-\tcode{memory_order_relaxed} operations on a suitable atomic pointer
-variable, and then immediately accessing \tcode{A} in the receiving thread.
-This results in undefined behavior. \end{note}
-\end{itemdescr}
-
-\begin{itemdecl}
-#define ATOMIC_VAR_INIT(value) @\seebelow@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-The macro expands to a token sequence suitable for
-constant initialization of
-an atomic variable of static storage duration of a type that is
-initialization-compatible with \textit{value}.
-\begin{note} This operation may need to initialize locks. \end{note}
-Concurrent access to the variable being initialized, even via an atomic operation,
-constitutes a data race. \begin{example}
-\begin{codeblock}
-atomic<int> v = ATOMIC_VAR_INIT(5);
-\end{codeblock}
-\end{example}
-\end{itemdescr}
-
-\indexlibrarymember{atomic type}{is_always_lock_free}%
-\begin{itemdecl}
-static constexpr bool is_always_lock_free = @\impdef{}@;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-The \tcode{static} data member \tcode{is_always_lock_free} is true
-if the atomic type's operations are always lock-free, and false otherwise.
-\begin{note}
-The value of \tcode{is_always_lock_free} is consistent with the value of
-the corresponding \tcode{ATOMIC_..._LOCK_FREE} macro, if defined.
-\end{note}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic_is_lock_free}}%
-\indexlibrarymember{atomic type}{is_lock_free}%
-\begin{itemdecl}
-bool atomic_is_lock_free(const volatile @\placeholder{A}@*@\itcorr[-1]@ object) noexcept;
-bool atomic_is_lock_free(const @\placeholder{A}@*@\itcorr[-1]@ object) noexcept;
-bool @\placeholdernc{A}@::is_lock_free() const volatile noexcept;
-bool @\placeholdernc{A}@::is_lock_free() const noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{true} if the object's operations are lock-free, \tcode{false} otherwise.
-\begin{note}
-The return value of the \tcode{is_lock_free} member function
-is consistent with the value of \tcode{is_always_lock_free} for the same type.
-\end{note}
-\end{itemdescr}
-
-\begin{itemdecl}
-void atomic_init(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-void atomic_init(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Non-atomically
-initializes \tcode{*object} with value \tcode{desired}. This function shall only be applied
-to objects that have been default constructed, and then only once.
-\begin{note}
-These semantics ensure compatibility with C.
-\end{note}
-\begin{note}
-Concurrent access from another thread, even via an atomic operation, constitutes
-a data race.
-\end{note}
-
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic_store}}%
-\indexlibrary{\idxcode{atomic_store_explicit}}%
-\indexlibrarymember{atomic type}{store}%
-\begin{itemdecl}
-void atomic_store(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-void atomic_store(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-void atomic_store_explicit(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired, memory_order order) noexcept;
-void atomic_store_explicit(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired, memory_order order) noexcept;
-void @\placeholdernc{A}@::store(@\placeholdernc{C}@ desired, memory_order order = memory_order_seq_cst) volatile noexcept;
-void @\placeholdernc{A}@::store(@\placeholdernc{C}@ desired, memory_order order = memory_order_seq_cst) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires The \tcode{order} argument shall not be \tcode{memory_order_consume},
-\tcode{memory_order_acquire}, nor \tcode{memory_order_acq_rel}.
-
-\pnum
-\effects Atomically replaces the value pointed to by \tcode{object} or by \tcode{this}
-with the value of \tcode{desired}. Memory is affected according to the value of
-\tcode{order}.
-\end{itemdescr}
-
-\indexlibrarymember{atomic type}{operator=}%
-\begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator=(@\placeholdernc{C}@ desired) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator=(@\placeholdernc{C}@ desired) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects As if by \tcode{store(desired)}.
-
-\pnum
-\returns \tcode{desired}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic_load}}%
-\indexlibrary{\idxcode{atomic_load_explicit}}%
-\indexlibrarymember{atomic type}{load}%
-\begin{itemdecl}
-@\placeholdernc{C}@ atomic_load(const volatile @\placeholder{A}@*@\itcorr[-1]@ object) noexcept;
-@\placeholdernc{C}@ atomic_load(const @\placeholder{A}@*@\itcorr[-1]@ object) noexcept;
-@\placeholdernc{C}@ atomic_load_explicit(const volatile @\placeholder{A}@*@\itcorr[-1]@ object, memory_order) noexcept;
-@\placeholdernc{C}@ atomic_load_explicit(const @\placeholder{A}@*@\itcorr[-1]@ object, memory_order) noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::load(memory_order order = memory_order_seq_cst) const volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::load(memory_order order = memory_order_seq_cst) const noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires The \tcode{order} argument shall not be \tcode{memory_order_release} nor \tcode{memory_order_acq_rel}.
-
-\pnum
-\effects Memory is affected according to the value of \tcode{order}.
-
-\pnum
-\returns Atomically returns the value pointed to by \tcode{object} or by \tcode{this}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic type}!operator C@\tcode{operator \placeholder{C}}}%
-\indexlibrary{operator C@\tcode{operator \placeholder{C}}!\idxcode{atomic type}}%
-\begin{itemdecl}
-@\placeholdernc{A}@::operator @\placeholder{C}@() const volatile noexcept;
-@\placeholdernc{A}@::operator @\placeholder{C}@() const noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects As if by \tcode{load()}.
-
-\pnum
-\returns The result of \tcode{load()}.
-\end{itemdescr}
-
-
-\indexlibrary{\idxcode{atomic_exchange}}%
-\indexlibrary{\idxcode{atomic_exchange_explicit}}%
-\indexlibrarymember{atomic type}{exchange}%
-\begin{itemdecl}
-@\placeholdernc{C}@ atomic_exchange(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-@\placeholdernc{C}@ atomic_exchange(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired) noexcept;
-@\placeholdernc{C}@ atomic_exchange_explicit(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired, memory_order) noexcept;
-@\placeholdernc{C}@ atomic_exchange_explicit(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{C}@ desired, memory_order) noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::exchange(@\placeholdernc{C}@ desired, memory_order order = memory_order_seq_cst) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::exchange(@\placeholdernc{C}@ desired, memory_order order = memory_order_seq_cst) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Atomically replaces the value pointed to by \tcode{object} or by \tcode{this}
-with \tcode{desired}.
-Memory is affected according to the value of \tcode{order}.
-These operations are atomic read-modify-write operations~(\ref{intro.multithread}).
-
-\pnum
-\returns Atomically returns the value pointed to by \tcode{object} or by \tcode{this} immediately before the effects.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{atomic_compare_exchange_weak}}%
-\indexlibrary{\idxcode{atomic_compare_exchange_strong}}%
-\indexlibrary{\idxcode{atomic_compare_exchange_weak_explicit}}%
-\indexlibrary{\idxcode{atomic_compare_exchange_strong_explicit}}%
-\indexlibrarymember{atomic type}{compare_exchange_weak}%
-\indexlibrarymember{atomic type}{compare_exchange_strong}%
-\begin{itemdecl}
-bool atomic_compare_exchange_weak(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired) noexcept;
-bool atomic_compare_exchange_weak(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired) noexcept;
-bool atomic_compare_exchange_strong(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired) noexcept;
-bool atomic_compare_exchange_strong(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired) noexcept;
-bool atomic_compare_exchange_weak_explicit(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool atomic_compare_exchange_weak_explicit(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool atomic_compare_exchange_strong_explicit(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool atomic_compare_exchange_strong_explicit(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholder{C}@*@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool @\placeholdernc{A}@::compare_exchange_weak(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) volatile noexcept;
-bool @\placeholdernc{A}@::compare_exchange_weak(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool @\placeholdernc{A}@::compare_exchange_strong(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) volatile noexcept;
-bool @\placeholdernc{A}@::compare_exchange_strong(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order success, memory_order failure) noexcept;
-bool @\placeholdernc{A}@::compare_exchange_weak(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order order = memory_order_seq_cst) volatile noexcept;
-bool @\placeholdernc{A}@::compare_exchange_weak(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order order = memory_order_seq_cst) noexcept;
-bool @\placeholdernc{A}@::compare_exchange_strong(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order order = memory_order_seq_cst) volatile noexcept;
-bool @\placeholdernc{A}@::compare_exchange_strong(@\placeholder{C}@&@\itcorr[-1]@ expected, @\placeholdernc{C}@ desired,
-    memory_order order = memory_order_seq_cst) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires The \tcode{failure} argument shall not be \tcode{memory_order_release} nor
-\tcode{memory_order_acq_rel}. The \tcode{failure} argument shall be no stronger than the
-\tcode{success} argument.
-
-\pnum
-\effects Retrieves the value in \tcode{expected}. It then atomically
-compares the contents of the memory pointed to by \tcode{object} or by \tcode{this}
-for equality with that previously retrieved from \tcode{expected},
-and if true, replaces the contents of the memory pointed to
-by \tcode{object} or by \tcode{this} with that in \tcode{desired}.
-If and only if the comparison is true, memory is affected according to the
-value of \tcode{success}, and if the comparison is false, memory is affected according
-to the value of \tcode{failure}. When only one \tcode{memory_order} argument is
-supplied, the value of \tcode{success} is \tcode{order}, and the value of
-\tcode{failure} is \tcode{order} except that a value of \tcode{memory_order_acq_rel}
-shall be replaced by the value \tcode{memory_order_acquire} and a value of
-\tcode{memory_order_release} shall be replaced by the value
-\tcode{memory_order_relaxed}.
-If and only if the comparison is false then, after the atomic operation,
-the contents of the memory in \tcode{expected} are replaced by the value
-read from \tcode{object} or by \tcode{this} during the atomic comparison.
-If the operation returns \tcode{true}, these
-operations are atomic read-modify-write
-operations~(\ref{intro.multithread}) on the memory
-pointed to by \tcode{this} or \tcode{object}.
-Otherwise, these operations are atomic load operations on that memory.
-
-\pnum
-\returns The result of the comparison.
-
-\pnum
-\begin{note} For example, the effect of
-\tcode{atomic_compare_exchange_strong} is
-\begin{codeblock}
-if (memcmp(object, expected, sizeof(*object)) == 0)
-  memcpy(object, &desired, sizeof(*object));
-else
-  memcpy(expected, object, sizeof(*object));
-\end{codeblock}
-\end{note}
-\begin{example} The expected use of the compare-and-exchange operations is as follows. The
-compare-and-exchange operations will update \tcode{expected} when another iteration of
-the loop is needed.
-\begin{codeblock}
-expected = current.load();
-do {
-  desired = function(expected);
-} while (!current.compare_exchange_weak(expected, desired));
-\end{codeblock}
-\end{example}
-\begin{example} Because the expected value is updated only on failure,
-code releasing the memory containing the \tcode{expected} value on success will work.
-E.g. list head insertion will act atomically and would not introduce a
-data race in the following code:
-\begin{codeblock}
-do {
-  p->next = head; // make new list node point to the current head
-} while (!head.compare_exchange_weak(p->next, p)); // try to insert
-\end{codeblock}
-\end{example}
-
-\pnum
-Implementations should ensure that weak compare-and-exchange operations do not
-consistently return \tcode{false} unless either the atomic object has value
-different from \tcode{expected} or there are concurrent modifications to the
-atomic object.
-
-\pnum
-\remark
-A weak compare-and-exchange operation may fail spuriously. That is, even when
-the contents of memory referred to by \tcode{expected} and \tcode{object} are
-equal, it may return false and store back to \tcode{expected} the same memory
-contents that were originally there.
-\begin{note} This
-spurious failure enables implementation of compare-and-exchange on a broader class of
-machines, e.g., load-locked store-conditional machines. A
-consequence of spurious failure is that nearly all uses of weak compare-and-exchange
-will be in a loop.
-
-When a compare-and-exchange is in a loop, the weak version will yield better performance
-on some platforms. When a weak compare-and-exchange would require a loop and a strong one
-would not, the strong one is preferable.
-\end{note}
-
-\pnum
-\begin{note} The \tcode{memcpy} and \tcode{memcmp} semantics of the compare-and-exchange
-operations may result in failed comparisons for values that compare equal with
-\tcode{operator==} if the underlying type has padding bits, trap bits, or alternate
-representations of the same value. Thus, \tcode{compare_exchange_strong} should be used
-with extreme care. On the other hand, \tcode{compare_exchange_weak} should converge
-rapidly. \end{note}
-\end{itemdescr}
-
-\pnum
-The following operations perform arithmetic computations. The key, operator, and computation correspondence is:
+The following operations perform pointer arithmetic. The key, operator,
+and computation correspondence is:
 
 \begin{floattable}
-{Atomic arithmetic computations}{tab:atomic.arithmetic.computations}{lll|lll}
+{Atomic pointer computations}{atomic.types.pointer.comp}{lll|lll}
 \hline
 \tcode{Key}       &
   Op          &
@@ -1113,137 +2528,801 @@ The following operations perform arithmetic computations. The key, operator, and
   addition        &
 \tcode{sub}       &
   \tcode{-}       &
-  subtraction     \\
-\tcode{or}        &
-  \tcode{|}       &
-  bitwise inclusive or  &
-\tcode{xor}       &
-  \tcode{\^{}}        &
-  bitwise exclusive or  \\
-\tcode{and}       &
-  \tcode{\&}      &
-  bitwise and     &&&\\\hline
+  subtraction     \\ \hline
 \end{floattable}
 
-\indexlibrary{\idxcode{atomic_fetch_\textit{key}}}%
-\indexlibrary{\idxcode{atomic_fetch_\textit{key}_explicit}}%
-\indexlibrarymember{atomic type}{fetch_\textit{key}}%
+\indexlibraryglobal{atomic_fetch_add}%
+\indexlibraryglobal{atomic_fetch_sub}%
+\indexlibraryglobal{atomic_fetch_add_explicit}%
+\indexlibraryglobal{atomic_fetch_sub_explicit}%
+\indexlibrarymember{fetch_add}{atomic<T*>}%
+\indexlibrarymember{fetch_sub}{atomic<T*>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ atomic_fetch_@\placeholdernc{key}@(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{M}@ operand) noexcept;
-@\placeholdernc{C}@ atomic_fetch_@\placeholdernc{key}@(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{M}@ operand) noexcept;
-@\placeholdernc{C}@ atomic_fetch_@\placeholdernc{key}@_explicit(volatile @\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{M}@ operand, memory_order order) noexcept;
-@\placeholdernc{C}@ atomic_fetch_@\placeholdernc{key}@_explicit(@\placeholder{A}@*@\itcorr[-1]@ object, @\placeholdernc{M}@ operand, memory_order order) noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::fetch_@\placeholdernc{key}@(@\placeholdernc{M}@ operand, memory_order order = memory_order_seq_cst) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::fetch_@\placeholdernc{key}@(@\placeholdernc{M}@ operand, memory_order order = memory_order_seq_cst) noexcept;
+T* fetch_@\placeholdernc{key}@(ptrdiff_t operand, memory_order order = memory_order::seq_cst) volatile noexcept;
+T* fetch_@\placeholdernc{key}@(ptrdiff_t operand, memory_order order = memory_order::seq_cst) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Atomically replaces the value pointed to by \tcode{object} or by
-\tcode{this} with the result of the \textit{computation} applied to the
-value pointed to by \tcode{object} or by \tcode{this} and the given \tcode{operand}.
+\mandates
+\tcode{T} is a complete object type.
+\begin{note}
+Pointer arithmetic on \tcode{void*} or function pointers is ill-formed.
+\end{note}
+
+\pnum
+\effects
+Atomically replaces the value pointed to by
+\tcode{this} with the result of the computation applied to the
+value pointed to by \tcode{this} and the given \tcode{operand}.
 Memory is affected according to the value of \tcode{order}.
-These operations are atomic read-modify-write operations~(\ref{intro.multithread}).
+These operations are atomic read-modify-write operations\iref{intro.multithread}.
 
 \pnum
-\returns Atomically, the value pointed to by \tcode{object} or by \tcode{this} immediately before the effects.
+\returns
+Atomically, the value pointed to by \tcode{this} immediately before the effects.
 
 \pnum
-\remark For signed integer types, arithmetic is defined to use two's complement
-representation. There are no undefined results. For address types, the result may be an
-undefined address, but the operations otherwise have no undefined behavior.
+\remarks
+The result may be an undefined address,
+but the operations otherwise have no undefined behavior.
 \end{itemdescr}
 
-\indexlibrarymember{atomic type}{operator "@=}%
+\indexlibrarymember{operator+=}{atomic<T*>}%
+\indexlibrarymember{operator-=}{atomic<T*>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator @\textit{op}@=(@\placeholdernc{M}@ operand) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator @\textit{op}@=(@\placeholdernc{M}@ operand) noexcept;
+T* operator @\placeholder{op}@=(ptrdiff_t operand) volatile noexcept;
+T* operator @\placeholder{op}@=(ptrdiff_t operand) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects As if by \tcode{fetch_\placeholder{key}(operand)}.
-
-\pnum
-\returns \tcode{fetch_\placeholder{key}(operand) op operand}.
+\effects
+Equivalent to: \tcode{return fetch_\placeholder{key}(operand) \placeholder{op} operand;}
 \end{itemdescr}
 
-\indexlibrarymember{atomic type}{operator++}%
+\rSec2[atomics.types.memop]{Member operators common to integers and pointers to objects}
+
+\indexlibrarymember{operator++}{atomic<T*>}%
+\indexlibrarymember{operator++}{atomic<\placeholder{integral}>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator++(int) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator++(int) noexcept;
+value_type operator++(int) volatile noexcept;
+value_type operator++(int) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{fetch_add(1)}.
+\effects
+Equivalent to: \tcode{return fetch_add(1);}
 \end{itemdescr}
 
-\indexlibrarymember{atomic type}{operator\dcr}%
+\indexlibrarymember{operator\dcr}{atomic<T*>}%
+\indexlibrarymember{operator\dcr}{atomic<\placeholder{integral}>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator--(int) volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator--(int) noexcept;
+value_type operator--(int) volatile noexcept;
+value_type operator--(int) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{fetch_sub(1)}.
+\effects
+Equivalent to: \tcode{return fetch_sub(1);}
 \end{itemdescr}
 
-\indexlibrarymember{atomic type}{operator++}%
+\indexlibrarymember{operator++}{atomic<T*>}%
+\indexlibrarymember{operator++}{atomic<\placeholder{integral}>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator++() volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator++() noexcept;
+value_type operator++() volatile noexcept;
+value_type operator++() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects As if by \tcode{fetch_add(1)}.
-
-\pnum
-\returns \tcode{fetch_add(1) + 1}.
+\effects
+Equivalent to: \tcode{return fetch_add(1) + 1;}
 \end{itemdescr}
 
-\indexlibrarymember{atomic type}{operator\dcr}%
+\indexlibrarymember{operator\dcr}{atomic<T*>}%
+\indexlibrarymember{operator\dcr}{atomic<\placeholder{integral}>}%
 \begin{itemdecl}
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator--() volatile noexcept;
-@\placeholdernc{C}@ @\placeholdernc{A}@::operator--() noexcept;
+value_type operator--() volatile noexcept;
+value_type operator--() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects As if by \tcode{fetch_sub(1)}.
+\effects
+Equivalent to: \tcode{return fetch_sub(1) - 1;}
+\end{itemdescr}
+
+\indextext{atomic!smart pointers|(}%
+\rSec2[util.smartptr.atomic]{Partial specializations for smart pointers}
 
 \pnum
-\returns \tcode{fetch_sub(1) - 1}.
+The library provides partial specializations of the \tcode{atomic} template
+for shared-ownership smart pointers\iref{smartptr}.
+The behavior of all operations is as specified in \ref{atomics.types.generic},
+unless specified otherwise.
+The template parameter \tcode{T} of these partial specializations
+may be an incomplete type.
+
+\pnum
+All changes to an atomic smart pointer in this subclause, and
+all associated \tcode{use_count} increments,
+are guaranteed to be performed atomically.
+Associated \tcode{use_count} decrements
+are sequenced after the atomic operation,
+but are not required to be part of it.
+Any associated deletion and deallocation
+are sequenced after the atomic update step and
+are not part of the atomic operation.
+\begin{note}
+If the atomic operation uses locks,
+locks acquired by the implementation
+will be held when any \tcode{use_count} adjustments are performed, and
+will not be held when any destruction or deallocation
+resulting from this is performed.
+\end{note}
+
+\rSec3[util.smartptr.atomic.shared]{Partial specialization for \tcode{shared_ptr}}
+\indexlibraryglobal{atomic<shared_ptr<T>>}%
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic<shared_ptr<T>> {
+    using value_type = shared_ptr<T>;
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
+
+    bool is_lock_free() const noexcept;
+    void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+    shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+    operator shared_ptr<T>() const noexcept;
+
+    shared_ptr<T> exchange(shared_ptr<T> desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+
+    bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                               memory_order success, memory_order failure) noexcept;
+    bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                                 memory_order success, memory_order failure) noexcept;
+
+    bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                               memory_order order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                                 memory_order order = memory_order::seq_cst) noexcept;
+
+    void wait(shared_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+    void notify_one() noexcept;
+    void notify_all() noexcept;
+
+    constexpr atomic() noexcept;
+    atomic(shared_ptr<T> desired) noexcept;
+    atomic(const atomic&) = delete;
+    void operator=(const atomic&) = delete;
+    void operator=(shared_ptr<T> desired) noexcept;
+
+  private:
+    shared_ptr<T> p;            // \expos
+  };
+}
+\end{codeblock}
+
+\indexlibraryctor{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+constexpr atomic() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes \tcode{p\{\}}.
 \end{itemdescr}
+
+\indexlibraryctor{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+atomic(shared_ptr<T> desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes the object with the value \tcode{desired}.
+Initialization is not an atomic operation\iref{intro.multithread}.
+\begin{note}
+It is possible to have an access to
+an atomic object \tcode{A} race with its construction,
+for example,
+by communicating the address of the just-constructed object \tcode{A}
+to another thread via \tcode{memory_order::relaxed} operations
+on a suitable atomic pointer variable, and
+then immediately accessing \tcode{A} in the receiving thread.
+This results in undefined behavior.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{store}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+The \tcode{order} argument shall not be
+\tcode{memory_order::consume},
+\tcode{memory_order::acquire}, nor
+\tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Atomically replaces the value pointed to by \tcode{this} with
+the value of \tcode{desired} as if by \tcode{p.swap(desired)}.
+Memory is affected according to the value of \tcode{order}.
+\end{itemdescr}
+
+\indexlibrarymember{operator=}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+void operator=(shared_ptr<T> desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to \tcode{store(desired)}.
+\end{itemdescr}
+
+\indexlibrarymember{load}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{order} shall not be
+\tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Memory is affected according to the value of \tcode{order}.
+
+\pnum
+\returns
+Atomically returns \tcode{p}.
+\end{itemdescr}
+
+\indexlibrarymember{operator shared_ptr<T>}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+operator shared_ptr<T>() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return load();}
+\end{itemdescr}
+
+\indexlibrarymember{exchange}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+shared_ptr<T> exchange(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces \tcode{p} with \tcode{desired}
+as if by \tcode{p.swap(desired)}.
+Memory is affected according to the value of \tcode{order}.
+This is an atomic read-modify-write operation\iref{intro.races}.
+
+\pnum
+\returns
+Atomically returns the value of \tcode{p} immediately before the effects.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_weak}{atomic<shared_ptr<T>>}%
+\indexlibrarymember{compare_exchange_strong}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                           memory_order success, memory_order failure) noexcept;
+bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                             memory_order success, memory_order failure) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{failure} shall not be
+\tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+If \tcode{p} is equivalent to \tcode{expected},
+assigns \tcode{desired} to \tcode{p} and
+has synchronization semantics corresponding to the value of \tcode{success},
+otherwise assigns \tcode{p} to \tcode{expected} and
+has synchronization semantics corresponding to the value of \tcode{failure}.
+
+\pnum
+\returns
+\tcode{true} if \tcode{p} was equivalent to \tcode{expected},
+\tcode{false} otherwise.
+
+\pnum
+\remarks
+Two \tcode{shared_ptr} objects are equivalent if
+they store the same pointer value and
+either share ownership or are both empty.
+The weak form may fail spuriously. See \ref{atomics.types.operations}.
+
+\pnum
+If the operation returns \tcode{true},
+\tcode{expected} is not accessed after the atomic update and
+the operation is an atomic read-modify-write operation\iref{intro.multithread}
+on the memory pointed to by \tcode{this}.
+Otherwise, the operation is an atomic load operation on that memory, and
+\tcode{expected} is updated with the existing value
+read from the atomic object in the attempted atomic update.
+The \tcode{use_count} update corresponding to the write to \tcode{expected}
+is part of the atomic operation.
+The write to \tcode{expected} itself
+is not required to be part of the atomic operation.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_weak}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return compare_exchange_weak(expected, desired, order, fail_order);
+\end{codeblock}
+where \tcode{fail_order} is the same as \tcode{order}
+except that a value of \tcode{memory_order::acq_rel}
+shall be replaced by the value \tcode{memory_order::acquire} and
+a value of \tcode{memory_order::release}
+shall be replaced by the value \tcode{memory_order::relaxed}.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_strong}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                             memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return compare_exchange_strong(expected, desired, order, fail_order);
+\end{codeblock}
+where \tcode{fail_order} is the same as \tcode{order}
+except that a value of \tcode{memory_order::acq_rel}
+shall be replaced by the value \tcode{memory_order::acquire} and
+a value of \tcode{memory_order::release}
+shall be replaced by the value \tcode{memory_order::relaxed}.
+\end{itemdescr}
+
+\indexlibrarymember{wait}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+void wait(shared_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+\tcode{order} is
+neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Repeatedly performs the following steps, in order:
+\begin{itemize}
+\item
+  Evaluates \tcode{load(order)} and compares it to \tcode{old}.
+\item
+  If the two are not equivalent, returns.
+\item
+  Blocks until it
+  is unblocked by an atomic notifying operation or is unblocked spuriously.
+\end{itemize}
+
+\pnum
+\remarks
+Two \tcode{shared_ptr} objects are equivalent
+if they store the same pointer and either share ownership or are both empty.
+This function is an atomic waiting operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_one}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+void notify_one() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of at least one atomic waiting operation
+that is eligible to be unblocked\iref{atomics.wait} by this call,
+if any such atomic waiting operations exist.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_all}{atomic<shared_ptr<T>>}%
+\begin{itemdecl}
+void notify_all() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of all atomic waiting operations
+that are eligible to be unblocked\iref{atomics.wait} by this call.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\rSec3[util.smartptr.atomic.weak]{Partial specialization for \tcode{weak_ptr}}
+\indexlibraryglobal{atomic<weak_ptr<T>>}%
+\begin{codeblock}
+namespace std {
+  template<class T> struct atomic<weak_ptr<T>> {
+    using value_type = weak_ptr<T>;
+    static constexpr bool is_always_lock_free = @\impdefx{whether a given \tcode{atomic} type's operations are always lock free}@;
+
+    bool is_lock_free() const noexcept;
+    void store(weak_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+    weak_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+    operator weak_ptr<T>() const noexcept;
+
+    weak_ptr<T> exchange(weak_ptr<T> desired,
+                         memory_order order = memory_order::seq_cst) noexcept;
+
+    bool compare_exchange_weak(weak_ptr<T>& expected, weak_ptr<T> desired,
+                               memory_order success, memory_order failure) noexcept;
+    bool compare_exchange_strong(weak_ptr<T>& expected, weak_ptr<T> desired,
+                                 memory_order success, memory_order failure) noexcept;
+
+    bool compare_exchange_weak(weak_ptr<T>& expected, weak_ptr<T> desired,
+                               memory_order order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(weak_ptr<T>& expected, weak_ptr<T> desired,
+                                 memory_order order = memory_order::seq_cst) noexcept;
+
+    void wait(weak_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+    void notify_one() noexcept;
+    void notify_all() noexcept;
+
+    constexpr atomic() noexcept;
+    atomic(weak_ptr<T> desired) noexcept;
+    atomic(const atomic&) = delete;
+    void operator=(const atomic&) = delete;
+    void operator=(weak_ptr<T> desired) noexcept;
+
+  private:
+    weak_ptr<T> p;              // \expos
+  };
+}
+\end{codeblock}
+
+\indexlibraryctor{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+constexpr atomic() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes \tcode{p\{\}}.
+\end{itemdescr}
+
+\indexlibraryctor{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+atomic(weak_ptr<T> desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes the object with the value \tcode{desired}.
+Initialization is not an atomic operation\iref{intro.multithread}.
+\begin{note}
+It is possible to have an access to
+an atomic object \tcode{A} race with its construction,
+for example,
+by communicating the address of the just-constructed object \tcode{A}
+to another thread via \tcode{memory_order::relaxed} operations
+on a suitable atomic pointer variable, and
+then immediately accessing \tcode{A} in the receiving thread.
+This results in undefined behavior.
+\end{note}
+\end{itemdescr}
+
+\indexlibrarymember{store}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+void store(weak_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+The \tcode{order} argument shall not be
+\tcode{memory_order::consume},
+\tcode{memory_order::acquire}, nor
+\tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Atomically replaces the value pointed to by \tcode{this} with
+the value of \tcode{desired} as if by \tcode{p.swap(desired)}.
+Memory is affected according to the value of \tcode{order}.
+\end{itemdescr}
+
+\indexlibrarymember{operator=}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+void operator=(weak_ptr<T> desired) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to \tcode{store(desired)}.
+\end{itemdescr}
+
+\indexlibrarymember{load}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+weak_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{order} shall not be
+\tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Memory is affected according to the value of \tcode{order}.
+
+\pnum
+\returns
+Atomically returns \tcode{p}.
+\end{itemdescr}
+
+\indexlibrarymember{operator weak_ptr<T>}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+operator weak_ptr<T>() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return load();}
+\end{itemdescr}
+
+\indexlibrarymember{exchange}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+weak_ptr<T> exchange(weak_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Atomically replaces \tcode{p} with \tcode{desired}
+as if by \tcode{p.swap(desired)}.
+Memory is affected according to the value of \tcode{order}.
+This is an atomic read-modify-write operation\iref{intro.races}.
+
+\pnum
+\returns
+Atomically returns the value of \tcode{p} immediately before the effects.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_weak}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_weak(weak_ptr<T>& expected, weak_ptr<T> desired,
+                           memory_order success, memory_order failure) noexcept;
+bool compare_exchange_strong(weak_ptr<T>& expected, weak_ptr<T> desired,
+                             memory_order success, memory_order failure) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{failure} shall not be
+\tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+If \tcode{p} is equivalent to \tcode{expected},
+assigns \tcode{desired} to \tcode{p} and
+has synchronization semantics corresponding to the value of \tcode{success},
+otherwise assigns \tcode{p} to \tcode{expected} and
+has synchronization semantics corresponding to the value of \tcode{failure}.
+
+\pnum
+\returns
+\tcode{true} if \tcode{p} was equivalent to \tcode{expected},
+\tcode{false} otherwise.
+
+\pnum
+\remarks
+Two \tcode{weak_ptr} objects are equivalent if
+they store the same pointer value and
+either share ownership or are both empty.
+The weak form may fail spuriously. See \ref{atomics.types.operations}.
+
+\pnum
+If the operation returns \tcode{true},
+\tcode{expected} is not accessed after the atomic update and
+the operation is an atomic read-modify-write operation\iref{intro.multithread}
+on the memory pointed to by \tcode{this}.
+Otherwise, the operation is an atomic load operation on that memory, and
+\tcode{expected} is updated with the existing value
+read from the atomic object in the attempted atomic update.
+The \tcode{use_count} update corresponding to the write to \tcode{expected}
+is part of the atomic operation.
+The write to \tcode{expected} itself
+is not required to be part of the atomic operation.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_weak}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_weak(weak_ptr<T>& expected, weak_ptr<T> desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return compare_exchange_weak(expected, desired, order, fail_order);
+\end{codeblock}
+where \tcode{fail_order} is the same as \tcode{order}
+except that a value of \tcode{memory_order::acq_rel}
+shall be replaced by the value \tcode{memory_order::acquire} and
+a value of \tcode{memory_order::release}
+shall be replaced by the value \tcode{memory_order::relaxed}.
+\end{itemdescr}
+
+\indexlibrarymember{compare_exchange_strong}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+bool compare_exchange_strong(weak_ptr<T>& expected, weak_ptr<T> desired,
+                             memory_order order = memory_order::seq_cst) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return compare_exchange_strong(expected, desired, order, fail_order);
+\end{codeblock}
+where \tcode{fail_order} is the same as \tcode{order}
+except that a value of \tcode{memory_order::acq_rel}
+shall be replaced by the value \tcode{memory_order::acquire} and
+a value of \tcode{memory_order::release}
+shall be replaced by the value \tcode{memory_order::relaxed}.
+\end{itemdescr}
+
+\indexlibrarymember{wait}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+void wait(weak_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\expects
+\tcode{order} is
+neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Repeatedly performs the following steps, in order:
+\begin{itemize}
+\item
+  Evaluates \tcode{load(order)} and compares it to \tcode{old}.
+\item
+  If the two are not equivalent, returns.
+\item
+  Blocks until it
+  is unblocked by an atomic notifying operation or is unblocked spuriously.
+\end{itemize}
+
+\pnum
+\remarks
+Two \tcode{weak_ptr} objects are equivalent
+if they store the same pointer and either share ownership or are both empty.
+This function is an atomic waiting operation\iref{atomics.wait}.
+\end{itemdescr}
+
+
+\indexlibrarymember{notify_one}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+void notify_one() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of at least one atomic waiting operation
+that is eligible to be unblocked\iref{atomics.wait} by this call,
+if any such atomic waiting operations exist.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\indexlibrarymember{notify_all}{atomic<weak_ptr<T>>}%
+\begin{itemdecl}
+void notify_all() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of all atomic waiting operations
+that are eligible to be unblocked\iref{atomics.wait} by this call.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+\indextext{atomic!smart pointers|)}
+
+\rSec1[atomics.nonmembers]{Non-member functions}
+
+\pnum
+A non-member function template whose name matches the pattern
+\tcode{atomic_\placeholder{f}} or the pattern \tcode{atomic_\placeholder{f}_explicit}
+invokes the member function \tcode{\placeholder{f}}, with the value of the
+first parameter as the object expression and the values of the remaining parameters
+(if any) as the arguments of the member function call, in order. An argument
+for a parameter of type \tcode{atomic<T>::value_type*} is dereferenced when
+passed to the member function call.
+If no such member function exists, the program is ill-formed.
+
+\pnum
+\begin{note}
+The non-member functions enable programmers to write code that can be
+compiled as either C or C++, for example in a shared header file.
+\end{note}
 
 \rSec1[atomics.flag]{Flag type and operations}
 
 \begin{codeblock}
 namespace std {
-  typedef struct atomic_flag {
-    bool test_and_set(memory_order = memory_order_seq_cst) volatile noexcept;
-    bool test_and_set(memory_order = memory_order_seq_cst) noexcept;
-    void clear(memory_order = memory_order_seq_cst) volatile noexcept;
-    void clear(memory_order = memory_order_seq_cst) noexcept;
-
-    atomic_flag() noexcept = default;
+  struct atomic_flag {
+    constexpr atomic_flag() noexcept;
     atomic_flag(const atomic_flag&) = delete;
     atomic_flag& operator=(const atomic_flag&) = delete;
     atomic_flag& operator=(const atomic_flag&) volatile = delete;
-  } atomic_flag;
 
-  bool atomic_flag_test_and_set(volatile atomic_flag*) noexcept;
-  bool atomic_flag_test_and_set(atomic_flag*) noexcept;
-  bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order) noexcept;
-  bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order) noexcept;
-  void atomic_flag_clear(volatile atomic_flag*) noexcept;
-  void atomic_flag_clear(atomic_flag*) noexcept;
-  void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order) noexcept;
-  void atomic_flag_clear_explicit(atomic_flag*, memory_order) noexcept;
+    bool test(memory_order = memory_order::seq_cst) const volatile noexcept;
+    bool test(memory_order = memory_order::seq_cst) const noexcept;
+    bool test_and_set(memory_order = memory_order::seq_cst) volatile noexcept;
+    bool test_and_set(memory_order = memory_order::seq_cst) noexcept;
+    void clear(memory_order = memory_order::seq_cst) volatile noexcept;
+    void clear(memory_order = memory_order::seq_cst) noexcept;
 
-  #define ATOMIC_FLAG_INIT @\seebelow@
+    void wait(bool, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(bool, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
+  };
 }
 \end{codeblock}
 
@@ -1251,141 +3330,260 @@ namespace std {
 The \tcode{atomic_flag} type provides the classic test-and-set functionality. It has two states, set and clear.
 
 \pnum
-Operations on an object of type \tcode{atomic_flag} shall be lock-free. \begin{note} Hence
-the operations should also be address-free. No other type requires lock-free operations,
-so the \tcode{atomic_flag} type is the minimum hardware-implemented type needed to
-conform to this International standard. The remaining types can be emulated with
-\tcode{atomic_flag}, though with less than ideal properties. \end{note}
+Operations on an object of type \tcode{atomic_flag} shall be lock-free.
+\begin{note}
+Hence
+the operations should also be address-free.
+\end{note}
 
 \pnum
-The \tcode{atomic_flag} type shall have standard layout. It shall have a trivial default constructor, a deleted copy constructor, a deleted copy assignment operator, and a trivial destructor.
+The \tcode{atomic_flag} type is a standard-layout struct.
+It has a trivial destructor.
+
+\indexlibraryctor{atomic_flag}%
+\begin{itemdecl}
+constexpr atomic_flag::atomic_flag() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes \tcode{*this} to the clear state.
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_flag_test}%
+\indexlibraryglobal{atomic_flag_test_explicit}%
+\indexlibrarymember{test}{atomic_flag}%
+\begin{itemdecl}
+bool atomic_flag_test(const volatile atomic_flag* object) noexcept;
+bool atomic_flag_test(const atomic_flag* object) noexcept;
+bool atomic_flag_test_explicit(const volatile atomic_flag* object,
+                               memory_order order) noexcept;
+bool atomic_flag_test_explicit(const atomic_flag* object,
+                               memory_order order) noexcept;
+bool atomic_flag::test(memory_order order = memory_order::seq_cst) const volatile noexcept;
+bool atomic_flag::test(memory_order order = memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+For \tcode{atomic_flag_test}, let \tcode{order} be \tcode{memory_order::seq_cst}.
 
 \pnum
-The macro \tcode{ATOMIC_FLAG_INIT} shall be defined in such a way that it can be used to initialize an object of type \tcode{atomic_flag} to the
-clear state. The macro can be used in the form:
-\begin{codeblock}
-atomic_flag guard = ATOMIC_FLAG_INIT;
-\end{codeblock}
-It is unspecified whether the macro can be used in other initialization contexts.
-For a complete static-duration object, that initialization shall be static.
-Unless initialized with \tcode{ATOMIC_FLAG_INIT}, it is unspecified whether an
-\tcode{atomic_flag} object has an initial state of set or clear.
+\expects
+\tcode{order} is
+neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
 
-\indexlibrary{\idxcode{atomic_flag_test_and_set}}%
-\indexlibrary{\idxcode{atomic_flag_test_and_set_explicit}}%
-\indexlibrarymember{atomic_flag}{test_and_set}%
+\pnum
+\effects
+Memory is affected according to the value of \tcode{order}.
+
+\pnum
+\returns
+Atomically returns the value pointed to by \tcode{object} or \tcode{this}.
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_flag_test_and_set}%
+\indexlibraryglobal{atomic_flag_test_and_set_explicit}%
+\indexlibrarymember{test_and_set}{atomic_flag}%
 \begin{itemdecl}
 bool atomic_flag_test_and_set(volatile atomic_flag* object) noexcept;
 bool atomic_flag_test_and_set(atomic_flag* object) noexcept;
 bool atomic_flag_test_and_set_explicit(volatile atomic_flag* object, memory_order order) noexcept;
 bool atomic_flag_test_and_set_explicit(atomic_flag* object, memory_order order) noexcept;
-bool atomic_flag::test_and_set(memory_order order = memory_order_seq_cst) volatile noexcept;
-bool atomic_flag::test_and_set(memory_order order = memory_order_seq_cst) noexcept;
+bool atomic_flag::test_and_set(memory_order order = memory_order::seq_cst) volatile noexcept;
+bool atomic_flag::test_and_set(memory_order order = memory_order::seq_cst) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Atomically sets the value pointed to by \tcode{object} or by \tcode{this} to true. Memory is affected according to the value of
-\tcode{order}. These operations are atomic read-modify-write operations~(\ref{intro.multithread}).
+\effects
+Atomically sets the value pointed to by \tcode{object} or by \tcode{this} to \tcode{true}. Memory is affected according to the value of
+\tcode{order}. These operations are atomic read-modify-write operations\iref{intro.multithread}.
 
 \pnum
-\returns Atomically, the value of the object immediately before the effects.
+\returns
+Atomically, the value of the object immediately before the effects.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{atomic_flag_clear}}%
-\indexlibrary{\idxcode{atomic_flag_clear_explicit}}%
-\indexlibrarymember{atomic_flag}{clear}%
+\indexlibraryglobal{atomic_flag_clear}%
+\indexlibraryglobal{atomic_flag_clear_explicit}%
+\indexlibrarymember{clear}{atomic_flag}%
 \begin{itemdecl}
 void atomic_flag_clear(volatile atomic_flag* object) noexcept;
 void atomic_flag_clear(atomic_flag* object) noexcept;
 void atomic_flag_clear_explicit(volatile atomic_flag* object, memory_order order) noexcept;
 void atomic_flag_clear_explicit(atomic_flag* object, memory_order order) noexcept;
-void atomic_flag::clear(memory_order order = memory_order_seq_cst) volatile noexcept;
-void atomic_flag::clear(memory_order order = memory_order_seq_cst) noexcept;
+void atomic_flag::clear(memory_order order = memory_order::seq_cst) volatile noexcept;
+void atomic_flag::clear(memory_order order = memory_order::seq_cst) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires The \tcode{order} argument shall not be \tcode{memory_order_consume},
-\tcode{memory_order_acquire}, nor \tcode{memory_order_acq_rel}.
+\expects
+The \tcode{order} argument is neither \tcode{memory_order::consume},
+\tcode{memory_order::acquire}, nor \tcode{memory_order::acq_rel}.
 
 \pnum
-\effects Atomically sets the value pointed to by \tcode{object} or by \tcode{this} to
+\effects
+Atomically sets the value pointed to by \tcode{object} or by \tcode{this} to
 \tcode{false}. Memory is affected according to the value of \tcode{order}.
+\end{itemdescr}
+
+\indexlibraryglobal{atomic_flag_wait}%
+\indexlibraryglobal{atomic_flag_wait_explicit}%
+\indexlibrarymember{wait}{atomic_flag}%
+\begin{itemdecl}
+void atomic_flag_wait(const volatile atomic_flag* object, bool old) noexcept;
+void atomic_flag_wait(const atomic_flag* object, bool old) noexcept;
+void atomic_flag_wait_explicit(const volatile atomic_flag* object,
+                               bool old, memory_order order) noexcept;
+void atomic_flag_wait_explicit(const atomic_flag* object,
+                               bool old, memory_order order) noexcept;
+void atomic_flag::wait(bool old, memory_order order =
+                                   memory_order::seq_cst) const volatile noexcept;
+void atomic_flag::wait(bool old, memory_order order =
+                                   memory_order::seq_cst) const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+For \tcode{atomic_flag_wait},
+let \tcode{order} be \tcode{memory_order::seq_cst}.
+Let \tcode{flag} be \tcode{object} for the non-member functions and
+\tcode{this} for the member functions.
+
+\pnum
+\expects
+\tcode{order} is
+neither \tcode{memory_order::release} nor \tcode{memory_order::acq_rel}.
+
+\pnum
+\effects
+Repeatedly performs the following steps, in order:
+\begin{itemize}
+\item
+  Evaluates \tcode{flag->test(order) != old}.
+\item
+  If the result of that evaluation is \tcode{true}, returns.
+\item
+  Blocks until it
+  is unblocked by an atomic notifying operation or is unblocked spuriously.
+\end{itemize}
+
+\pnum
+\remarks
+This function is an atomic waiting operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\begin{itemdecl}
+void atomic_flag_notify_one(volatile atomic_flag* object) noexcept;
+void atomic_flag_notify_one(atomic_flag* object) noexcept;
+void atomic_flag::notify_one() volatile noexcept;
+void atomic_flag::notify_one() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of at least one atomic waiting operation
+that is eligible to be unblocked\iref{atomics.wait} by this call,
+if any such atomic waiting operations exist.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
+\end{itemdescr}
+
+\begin{itemdecl}
+void atomic_flag_notify_all(volatile atomic_flag* object) noexcept;
+void atomic_flag_notify_all(atomic_flag* object) noexcept;
+void atomic_flag::notify_all() volatile noexcept;
+void atomic_flag::notify_all() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Unblocks the execution of all atomic waiting operations
+that are eligible to be unblocked\iref{atomics.wait} by this call.
+
+\pnum
+\remarks
+This function is an atomic notifying operation\iref{atomics.wait}.
 \end{itemdescr}
 
 \rSec1[atomics.fences]{Fences}
 
 \pnum
-This section introduces synchronization primitives called \term{fences}. Fences can have
+This subclause introduces synchronization primitives called \term{fences}. Fences can have
 acquire semantics, release semantics, or both. A fence with acquire semantics is called
 an \term{acquire fence}. A fence with release semantics is called a \term{release
 fence}.
 
 \pnum
-A release fence \textit{A} synchronizes with an acquire fence \textit{B} if there exist
-atomic operations \textit{X} and \textit{Y}, both operating on some atomic object
-\textit{M}, such that \textit{A} is sequenced before \textit{X}, \textit{X} modifies
-\textit{M}, \textit{Y} is sequenced before \textit{B}, and \textit{Y} reads the value
-written by \textit{X} or a value written by any side effect in the hypothetical release
-sequence \textit{X} would head if it were a release operation.
+A release fence $A$ synchronizes with an acquire fence $B$ if there exist
+atomic operations $X$ and $Y$, both operating on some atomic object
+$M$, such that $A$ is sequenced before $X$, $X$ modifies
+$M$, $Y$ is sequenced before $B$, and $Y$ reads the value
+written by $X$ or a value written by any side effect in the hypothetical release
+sequence $X$ would head if it were a release operation.
 
 \pnum
-A release fence \textit{A} synchronizes with an atomic operation \textit{B} that
-performs an acquire operation on an atomic object \textit{M} if there exists an atomic
-operation \textit{X} such that \textit{A} is sequenced before \textit{X}, \textit{X}
-modifies \textit{M}, and \textit{B} reads the value written by \textit{X} or a value
-written by any side effect in the hypothetical release sequence \textit{X} would head if
+A release fence $A$ synchronizes with an atomic operation $B$ that
+performs an acquire operation on an atomic object $M$ if there exists an atomic
+operation $X$ such that $A$ is sequenced before $X$, $X$
+modifies $M$, and $B$ reads the value written by $X$ or a value
+written by any side effect in the hypothetical release sequence $X$ would head if
 it were a release operation.
 
 \pnum
-An atomic operation \textit{A} that is a release operation on an atomic object
-\textit{M} synchronizes with an acquire fence \textit{B} if there exists some atomic
-operation \textit{X} on \textit{M} such that \textit{X} is sequenced before \textit{B}
-and reads the value written by \textit{A} or a value written by any side effect in the
-release sequence headed by \textit{A}.
+An atomic operation $A$ that is a release operation on an atomic object
+$M$ synchronizes with an acquire fence $B$ if there exists some atomic
+operation $X$ on $M$ such that $X$ is sequenced before $B$
+and reads the value written by $A$ or a value written by any side effect in the
+release sequence headed by $A$.
 
-\indexlibrary{\idxcode{atomic_thread_fence}}%
+\indexlibraryglobal{atomic_thread_fence}%
 \begin{itemdecl}
 extern "C" void atomic_thread_fence(memory_order order) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Depending on the value of \tcode{order}, this operation:
-
+\effects
+Depending on the value of \tcode{order}, this operation:
 \begin{itemize}
-\item has no effects, if \tcode{order == memory_order_relaxed};
+\item has no effects, if \tcode{order == memory_order::relaxed};
 
-\item is an acquire fence, if \tcode{order == memory_order_acquire || order ==
-memory_order_consume};
+\item is an acquire fence, if \tcode{order == memory_order::acquire} or \tcode{order == memory_order::consume};
 
-\item is a release fence, if \tcode{order == memory_order_release};
+\item is a release fence, if \tcode{order == memory_order::release};
 
-\item is both an acquire fence and a release fence, if \tcode{order ==
-memory_order_acq_rel};
+\item is both an acquire fence and a release fence, if \tcode{order == memory_order::acq_rel};
 
-\item is a sequentially consistent acquire and release fence, if \tcode{order == memory_order_seq_cst}.
+\item is a sequentially consistent acquire and release fence, if \tcode{order == memory_order::seq_cst}.
 \end{itemize}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{atomic_signal_fence}}%
+\indexlibraryglobal{atomic_signal_fence}%
 \begin{itemdecl}
 extern "C" void atomic_signal_fence(memory_order order) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{atomic_thread_fence(order)}, except that
+\effects
+Equivalent to \tcode{atomic_thread_fence(order)}, except that
 the resulting ordering constraints are established only between a thread and a
 signal handler executed in the same thread.
 
 \pnum
-\realnote \tcode{atomic_signal_fence} can be used to specify the order in which actions
+\begin{note}
+\tcode{atomic_signal_fence} can be used to specify the order in which actions
 performed by the thread become visible to the signal handler.
-
-\pnum
-\realnote compiler optimizations and reorderings of loads and stores are inhibited in
+Compiler optimizations and reorderings of loads and stores are inhibited in
 the same way as with \tcode{atomic_thread_fence}, but the hardware fence instructions
 that \tcode{atomic_thread_fence} would have inserted are not emitted.
+\end{note}
 \end{itemdescr}

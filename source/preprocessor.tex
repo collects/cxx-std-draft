@@ -1,25 +1,31 @@
 %!TEX root = std.tex
 \rSec0[cpp]{Preprocessing directives}%
-\indextext{preprocessing directives|(}
+\indextext{preprocessing directive|(}
 
-\indextext{compiler control line|see{preprocessing directives}}%
-\indextext{control line|see{preprocessing directives}}%
-\indextext{directive, preprocessing|see{preprocessing directives}}
+\indextext{compiler control line|see{preprocessing directive}}%
+\indextext{control line|see{preprocessing directive}}%
+\indextext{directive, preprocessing|see{preprocessing directive}}
 
 \gramSec[gram.cpp]{Preprocessing directives}
+
+\rSec1[cpp.pre]{Preamble}
 
 \pnum
 A \defn{preprocessing directive} consists of a sequence of preprocessing tokens
 that satisfies the following constraints:
-The first token in the sequence is a
-\tcode{\#}
-preprocessing token that (at the start of translation phase 4)
-is either the first character in the source file
+The first token in the sequence,
+referred to as a \defnadj{directive-introducing}{token},
+is a \tcode{\#} preprocessing token,
+an \tcode{import} preprocessing token, or
+an \tcode{export} preprocessing token
+immediately followed by an \tcode{import} preprocessing token,
+that (at the start of translation phase 4)
+either begins with the first character in the source file
 (optionally after white space containing no new-line characters)
-or that follows white space containing at least one new-line character.
+or follows white space containing at least one new-line character.
 The last token in the sequence is the first new-line character
 that follows the first token in the sequence.\footnote{Thus,
-preprocessing directives are commonly called ``lines.''
+preprocessing directives are commonly called ``lines''.
 These ``lines'' have no other syntactic significance,
 as all white space is equivalent except in certain situations
 during preprocessing (see the
@@ -30,7 +36,7 @@ within what would otherwise be an invocation of a function-like macro.
 
 \begin{bnf}
 \nontermdef{preprocessing-file}\br
-    group\opt
+    \opt{group}
 \end{bnf}
 
 \begin{bnf}
@@ -41,23 +47,38 @@ within what would otherwise be an invocation of a function-like macro.
 
 \begin{bnf}
 \nontermdef{group-part}\br
-    if-section\br
     control-line\br
+    if-section\br
     text-line\br
     \terminal{\#} conditionally-supported-directive
 \end{bnf}
 
-\begin{bnf}
-\nontermdef{if-section}\br
-    if-group elif-groups\opt else-group\opt endif-line
+\begin{bnf}\obeyspaces
+\nontermdef{control-line}\br
+    \terminal{\# include} pp-tokens new-line\br
+    \opt{\terminal{export}} \terminal{import} pp-tokens new-line\br
+    \terminal{\# define } identifier replacement-list new-line\br
+    \terminal{\# define } identifier lparen \opt{identifier-list} \terminal{)} replacement-list new-line\br
+    \terminal{\# define } identifier lparen \terminal{... )} replacement-list new-line\br
+    \terminal{\# define } identifier lparen identifier-list \terminal{, ... )} replacement-list new-line\br
+    \terminal{\# undef  } identifier new-line\br
+    \terminal{\# line   } pp-tokens new-line\br
+    \terminal{\# error  } \opt{pp-tokens} new-line\br
+    \terminal{\# pragma } \opt{pp-tokens} new-line\br
+    \terminal{\# }new-line
 \end{bnf}
 
-\begin{bnftab}
+\begin{bnf}
+\nontermdef{if-section}\br
+    if-group \opt{elif-groups} \opt{else-group} endif-line
+\end{bnf}
+
+\begin{bnf}\obeyspaces
 \nontermdef{if-group}\br
-\>\terminal{\# if}\>\>constant-expression new-line group\opt\br
-\>\terminal{\# ifdef}\>\>identifier new-line group\opt\br
-\>\terminal{\# ifndef}\>\>identifier new-line group\opt
-\end{bnftab}
+    \terminal{\# if     } constant-expression new-line \opt{group}\br
+    \terminal{\# ifdef  } identifier new-line \opt{group}\br
+    \terminal{\# ifndef } identifier new-line \opt{group}
+\end{bnf}
 
 \begin{bnf}
 \nontermdef{elif-groups}\br
@@ -65,38 +86,24 @@ within what would otherwise be an invocation of a function-like macro.
     elif-groups elif-group
 \end{bnf}
 
-\begin{bnftab}
+\begin{bnf}\obeyspaces
 \nontermdef{elif-group}\br
-\>\terminal{\# elif}\>\>constant-expression new-line group\opt
-\end{bnftab}
+    \terminal{\# elif   } constant-expression new-line \opt{group}
+\end{bnf}
 
-\begin{bnftab}
+\begin{bnf}\obeyspaces
 \nontermdef{else-group}\br
-\>\terminal{\# else}\>\>new-line group\opt
-\end{bnftab}
+    \terminal{\# else   } new-line \opt{group}
+\end{bnf}
 
-\begin{bnftab}
+\begin{bnf}\obeyspaces
 \nontermdef{endif-line}\br
-\>\terminal{\# endif}\>\>new-line
-\end{bnftab}
-
-\begin{bnftab}
-\nontermdef{control-line}\br
-\>\terminal{\# include}\>\>pp-tokens new-line\br
-\>\terminal{\# define}\>\>identifier replacement-list new-line\br
-\>\terminal{\# define}\>\>identifier lparen identifier-list\opt{} \terminal{)} replacement-list new-line\br
-\>\terminal{\# define}\>\>identifier lparen \terminal{... )} replacement-list new-line\br
-\>\terminal{\# define}\>\>identifier lparen identifier-list, \terminal{... )} replacement-list new-line\br
-\>\terminal{\# undef}\>\>identifier new-line\br
-\>\terminal{\# line}\>\>pp-tokens new-line\br
-\>\terminal{\# error}\>\>pp-tokens\opt new-line\br
-\>\terminal{\# pragma}\>\>pp-tokens\opt new-line\br
-\>\terminal{\# }new-line
-\end{bnftab}
+    \terminal{\# endif  } new-line
+\end{bnf}
 
 \begin{bnf}
 \nontermdef{text-line}\br
-    pp-tokens\opt new-line
+    \opt{pp-tokens} new-line
 \end{bnf}
 
 \begin{bnf}
@@ -117,7 +124,7 @@ within what would otherwise be an invocation of a function-like macro.
 
 \begin{bnf}
 \nontermdef{replacement-list}\br
-    pp-tokens\opt
+    \opt{pp-tokens}
 \end{bnf}
 
 \begin{bnf}
@@ -141,7 +148,7 @@ conditionally-supported with
 semantics.
 
 \pnum
-When in a group that is skipped~(\ref{cpp.cond}), the directive
+When in a group that is skipped\iref{cpp.cond}, the directive
 syntax is relaxed to allow any sequence of preprocessing tokens to occur between
 the directive name and the following new-line character.
 
@@ -149,9 +156,8 @@ the directive name and the following new-line character.
 The only white-space characters that shall appear
 between preprocessing tokens
 within a preprocessing directive
-(from just after the introducing
-\tcode{\#}
-preprocessing token through just before the terminating new-line character)
+(from just after the directive-introducing token
+through just before the terminating new-line character)
 are space and horizontal-tab
 (including spaces that have replaced comments
 or possibly other white-space characters
@@ -161,9 +167,10 @@ in translation phase 3).
 The implementation can
 process and skip sections of source files conditionally,
 include other source files,
+import macros from header units,
 and replace macros.
 These capabilities are called
-\term{preprocessing},
+\defn{preprocessing},
 because conceptually they occur
 before translation of the resulting translation unit.
 
@@ -171,48 +178,58 @@ before translation of the resulting translation unit.
 The preprocessing tokens within a preprocessing directive
 are not subject to macro expansion unless otherwise stated.
 
-\begin{example} In:
-
+\begin{example}
+In:
 \begin{codeblock}
 #define EMPTY
 EMPTY   #   include <file.h>
 \end{codeblock}
-
 the sequence of preprocessing tokens on the second line is \textit{not}
 a preprocessing directive, because it does not begin with a \tcode{\#} at the start of
 translation phase 4, even though it will do so after the macro \tcode{EMPTY}
-has been replaced.\end{example}
+has been replaced.
+\end{example}
 
 \rSec1[cpp.cond]{Conditional inclusion}%
 \indextext{preprocessing directive!conditional inclusion}%
 \indextext{inclusion!conditional|see{preprocessing directive, conditional inclusion}}
 
 \indextext{\idxcode{defined}}%
-\begin{ncbnf}
+\begin{bnf}
 \nontermdef{defined-macro-expression}\br
     \terminal{defined} identifier\br
     \terminal{defined (} identifier \terminal{)}
-\end{ncbnf}
+\end{bnf}
 
-\begin{ncbnf}
+\begin{bnf}
 \nontermdef{h-preprocessing-token}\br
-    \textnormal{any \nonterminal{preprocessing-token} other than \terminal{>}}
-\end{ncbnf}
+    \textnormal{any \grammarterm{preprocessing-token} other than \terminal{>}}
+\end{bnf}
 
-\begin{ncbnf}
+\begin{bnf}
 \nontermdef{h-pp-tokens}\br
     h-preprocessing-token\br
     h-pp-tokens h-preprocessing-token
-\end{ncbnf}
+\end{bnf}
 
-\indextext{__HAS_INCLUDE@\xname{has_include}}%
-\begin{ncbnf}
+\begin{bnf}
+\nontermdef{header-name-tokens}\br
+    string-literal\br
+    \terminal{<} h-pp-tokens \terminal{>}
+\end{bnf}
+
+\indextext{\idxxname{has_include}}%
+\begin{bnf}
 \nontermdef{has-include-expression}\br
-    \terminal{\xname{has_include} ( <} h-char-sequence \terminal{> )}\br
-    \terminal{\xname{has_include} ( "} q-char-sequence \terminal{" )}\br
-    \terminal{\xname{has_include} (}   string-literal  \terminal{)}\br
-    \terminal{\xname{has_include} ( <} h-pp-tokens     \terminal{> )}
-\end{ncbnf}
+    \terminal{\xname{has_include}} \terminal{(} header-name \terminal{)}\br
+    \terminal{\xname{has_include}} \terminal{(} header-name-tokens \terminal{)}
+\end{bnf}
+
+\indextext{\idxxname{has_cpp_attribute}}%
+\begin{bnf}
+\nontermdef{has-attribute-expression}\br
+    \terminal{\xname{has_cpp_attribute} (} pp-tokens \terminal{)}
+\end{bnf}
 
 \pnum
 The expression that controls conditional inclusion
@@ -224,14 +241,17 @@ during translation phase 4,
 all identifiers either are or are not macro names ---
 there simply are no keywords, enumeration constants, etc.}
 and it may contain zero or more \grammarterm{defined-macro-expression}{s} and/or
-\grammarterm{has-include-expression}{s} as unary operator expressions.
+\grammarterm{has-include-expression}{s} and/or
+\grammarterm{has-attribute-expression}{s} as unary operator expressions.
 
 \pnum
 A \grammarterm{defined-macro-expression} evaluates to \tcode{1}
 if the identifier is currently defined
 as a macro name
 (that is, if it is predefined
-or if it has been the subject of a
+or if it has one or more active macro definitions\iref{cpp.import},
+for example because
+it has been the subject of a
 \tcode{\#define}
 preprocessing directive
 without an intervening
@@ -239,8 +259,8 @@ without an intervening
 directive with the same subject identifier), \tcode{0} if it is not.
 
 \pnum
-The third and fourth forms of \grammarterm{has-include-expression}
-are considered only if neither of the first or second forms matches,
+The second form of \grammarterm{has-include-expression}
+is considered only if the first form does not match,
 in which case the preprocessing tokens are processed just as in normal text.
 
 \pnum
@@ -257,28 +277,67 @@ to \tcode{1} if the search for the source file succeeds, and
 to \tcode{0} if the search fails.
 
 \pnum
+Each \grammarterm{has-attribute-expression} is replaced by
+a non-zero \grammarterm{pp-number}
+matching the form of an \grammarterm{integer-literal}
+if the implementation supports an attribute
+with the name specified by interpreting
+the \grammarterm{pp-tokens}, after macro expansion,
+as an \grammarterm{attribute-token},
+and by \tcode{0} otherwise.
+The program is ill-formed if the \grammarterm{pp-tokens}
+do not match the form of an \grammarterm{attribute-token}.
+
+\pnum
+For an attribute specified in this document,
+the value of the \grammarterm{has-attribute-expression}
+is given by \tref{cpp.cond.ha}.
+For other attributes recognized by the implementation,
+the value is
+\impldef{value of \grammarterm{has-attribute-expression}
+for non-standard attributes}.
+\begin{note}
+It is expected
+that the availability of an attribute can be detected by any non-zero result.
+\end{note}
+
+\begin{floattable}{\xname{has_cpp_attribute} values}{cpp.cond.ha}
+{ll}
+\topline
+\lhdr{Attribute} & \rhdr{Value} \\ \rowsep
+\tcode{carries_dependency}    & \tcode{200809L} \\
+\tcode{deprecated}            & \tcode{201309L} \\
+\tcode{fallthrough}           & \tcode{201603L} \\
+\tcode{likely}                & \tcode{201803L} \\
+\tcode{maybe_unused}          & \tcode{201603L} \\
+\tcode{no_unique_address}     & \tcode{201803L} \\
+\tcode{nodiscard}             & \tcode{201907L} \\
+\tcode{noreturn}              & \tcode{200809L} \\
+\tcode{unlikely}              & \tcode{201803L} \\
+\end{floattable}
+
+\pnum
 The \tcode{\#ifdef} and \tcode{\#ifndef} directives, and
 the \tcode{defined} conditional inclusion operator,
-shall treat \xname{has_include} as if it were the name of a defined macro.
-The identifier \xname{has_include} shall not appear
-in any context not mentioned in this section.
+shall treat \xname{has_include} and \xname{has_cpp_attribute}
+as if they were the names of defined macros.
+The identifiers \xname{has_include} and \xname{has_cpp_attribute}
+shall not appear in any context not mentioned in this subclause.
 
 \pnum
 Each preprocessing token that remains (in the list of preprocessing tokens that
 will become the controlling expression)
 after all macro replacements have occurred
-shall be in the lexical form of a token~(\ref{lex.token}).
+shall be in the lexical form of a token\iref{lex.token}.
 
 \pnum
 Preprocessing directives of the forms
-
-\begin{ncbnftab}
+\begin{ncsimplebnf}\obeyspaces
 \indextext{\idxcode{\#if}}%
-\terminal{\# if}\>\>constant-expression new-line group\opt\br
+\terminal{\# if     } constant-expression new-line \opt{group}\br
 \indextext{\idxcode{\#elif}}%
-\terminal{\# elif}\>\>constant-expression new-line group\opt
-\end{ncbnftab}
-
+\terminal{\# elif   } constant-expression new-line \opt{group}
+\end{ncsimplebnf}
 check whether the controlling constant expression evaluates to nonzero.
 
 \pnum
@@ -298,33 +357,45 @@ or use of the
 unary operator does not match one of the two specified forms
 prior to macro replacement,
 the behavior is undefined.
+
+\pnum
 After all replacements due to macro expansion and
-evaluations of \grammarterm{defined-macro-expression}{s} and
-\grammarterm{has-include-expression}{s}
+evaluations of
+\grammarterm{defined-macro-expression}s,
+\grammarterm{has-include-expression}s, and
+\grammarterm{has-attribute-expression}s
 have been performed,
-all remaining identifiers and keywords\footnote{An alternative
-token~(\ref{lex.digraph}) is not an identifier,
-even when its spelling consists entirely of letters and underscores.
-Therefore it is not subject to this replacement.},
+all remaining identifiers and keywords,
 except for
 \tcode{true}
 and
 \tcode{false},
-are replaced with the pp-number
+are replaced with the \grammarterm{pp-number}
 \tcode{0},
 and then each preprocessing token is converted into a token.
+\begin{note}
+An alternative
+token\iref{lex.digraph} is not an identifier,
+even when its spelling consists entirely of letters and underscores.
+Therefore it is not subject to this replacement.
+\end{note}
+
+\pnum
 The resulting tokens comprise the controlling constant expression
 which is evaluated according to the rules of~\ref{expr.const}
 using arithmetic that has at least the ranges specified
 in~\ref{support.limits}. For the purposes of this token conversion and evaluation
 all signed and unsigned integer types
 act as if they have the same representation as, respectively,
-\tcode{intmax_t} or \tcode{uintmax_t}~(\ref{cstdint}).\footnote{Thus on an
+\tcode{intmax_t} or \tcode{uintmax_t}\iref{cstdint}.
+\begin{note}
+Thus on an
 implementation where \tcode{std::numeric_limits<int>::max()} is \tcode{0x7FFF}
 and \tcode{std::numeric_limits<unsigned int>::max()} is \tcode{0xFFFF},
 the integer literal \tcode{0x8000} is signed and positive within a \tcode{\#if}
 expression even though it is unsigned in translation phase
-7~(\ref{lex.phases}).}
+7\iref{lex.phases}.
+\end{note}
 This includes interpreting character literals, which may involve
 converting escape sequences into execution character set members.
 Whether the numeric value for these character literals
@@ -336,18 +407,19 @@ or
 \tcode{\#elif}
 directive)
 is \impldef{numeric values of character literals in \tcode{\#if}
-directives}.\footnote{Thus, the constant expression in the following
+directives}.
+\begin{note}
+Thus, the constant expression in the following
 \tcode{\#if}
 directive and
-\tcode{if}
-statement is not guaranteed to evaluate to the same value in these two
-contexts.
-\begin{tabbing}
-\hspace{.6in}\=\kill%
-\>\tcode{\#if 'z' - 'a' == 25}\\
-\>\tcode{if ('z' - 'a' == 25)}
-\end{tabbing}
-}
+\tcode{if} statement\iref{stmt.if}
+is not guaranteed to evaluate to the same value in these two
+contexts:
+\begin{codeblock}
+#if 'z' - 'a' == 25
+if ('z' - 'a' == 25)
+\end{codeblock}
+\end{note}
 Also, whether a single-character character literal may have a negative
 value is \impldef{negative value of character literal in preprocessor}.
 Each subexpression with type
@@ -356,23 +428,21 @@ is subjected to integral promotion before processing continues.
 
 \pnum
 Preprocessing directives of the forms
-
-\begin{ncbnftab}
-\terminal{\# ifdef}\>\>identifier new-line group\opt\br
+\begin{ncsimplebnf}\obeyspaces
+\terminal{\# ifdef  } identifier new-line \opt{group}\br
 \indextext{\idxcode{\#ifdef}}%
-\terminal{\# ifndef}\>\>identifier new-line group\opt
+\terminal{\# ifndef } identifier new-line \opt{group}
 \indextext{\idxcode{\#ifndef}}%
-\end{ncbnftab}
-
+\end{ncsimplebnf}
 check whether the identifier is or is not currently defined as a macro name.
 Their conditions are equivalent to
 \tcode{\#if}
 \tcode{defined}
-\term{identifier}
+\grammarterm{identifier}
 and
 \tcode{\#if}
 \tcode{!defined}
-\term{identifier}
+\grammarterm{identifier}
 respectively.
 
 \pnum
@@ -410,6 +480,7 @@ However,
 comments may appear anywhere in a source file,
 including within a preprocessing directive.}
 
+\pnum
 \begin{example}
 This demonstrates a way to include a library \tcode{optional} facility
 only if it is available:
@@ -417,21 +488,40 @@ only if it is available:
 \begin{codeblock}
 #if __has_include(<optional>)
 #  include <optional>
-#  define have_optional 1
+#  if __cpp_lib_optional >= 201603
+#    define have_optional 1
+#  endif
 #elif __has_include(<experimental/optional>)
 #  include <experimental/optional>
-#  define have_optional 1
-#  define experimental_optional 1
-#else
+#  if __cpp_lib_experimental_optional >= 201411
+#    define have_optional 1
+#    define experimental_optional 1
+#  endif
+#endif
+#ifndef have_optional
 #  define have_optional 0
 #endif
 \end{codeblock}
 \end{example}
 
+\pnum
+\begin{example}
+This demonstrates a way to use the attribute \tcode{[[acme::deprecated]]}
+only if it is available.
+\begin{codeblock}
+#if __has_cpp_attribute(acme::deprecated)
+#  define ATTR_DEPRECATED(msg) [[acme::deprecated(msg)]]
+#else
+#  define ATTR_DEPRECATED(msg) [[deprecated(msg)]]
+#endif
+ATTR_DEPRECATED("This function is deprecated") void anvil();
+\end{codeblock}
+\end{example}
+
 \rSec1[cpp.include]{Source file inclusion}
-\indextext{preprocessing directives!header inclusion}
-\indextext{preprocessing directives!source-file inclusion}
-\indextext{inclusion!source~file|see{preprocessing directives, source-file inclusion}}%
+\indextext{preprocessing directive!header inclusion}
+\indextext{preprocessing directive!source-file inclusion}
+\indextext{inclusion!source file|see{preprocessing directives, source-file inclusion}}%
 \indextext{\idxcode{\#include}}%
 
 \pnum
@@ -442,11 +532,9 @@ that can be processed by the implementation.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# include <}h-char-sequence\terminal{>} new-line
+\terminal{\# include <} h-char-sequence \terminal{>} new-line
 \end{ncsimplebnf}
-
 searches a sequence of
 \impldef{sequence of places searched for a header}
 places
@@ -464,11 +552,9 @@ is \impldef{search locations for \tcode{<>} header}.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# include "}q-char-sequence\terminal{"} new-line
+\terminal{\# include "} q-char-sequence \terminal{"} new-line
 \end{ncsimplebnf}
-
 causes the replacement of that
 directive by the entire contents of the
 source file identified by the specified sequence between the
@@ -480,22 +566,18 @@ manner.
 If this search is not supported,
 or if the search fails,
 the directive is reprocessed as if it read
-
 \begin{ncsimplebnf}
-\terminal{\# include <}h-char-sequence\terminal{>} new-line
+\terminal{\# include <} h-char-sequence \terminal{>} new-line
 \end{ncsimplebnf}
-
 with the identical contained sequence (including
 \tcode{>}
 characters, if any) from the original directive.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\# include} pp-tokens new-line
 \end{ncsimplebnf}
-
 (that does not match one of the two previous forms) is permitted.
 The preprocessing tokens after
 \tcode{include}
@@ -521,7 +603,7 @@ preprocessing token is \impldef{search locations for \tcode{""""} header}.
 \pnum
 The implementation shall provide unique mappings for
 sequences consisting of one or more
-\grammarterm{nondigit}{s} or \grammarterm{digit}{s}~(\ref{lex.name})
+\grammarterm{nondigit}{s} or \grammarterm{digit}{s}\iref{lex.name}
 followed by a period
 (\tcode{.})
 and a single
@@ -537,6 +619,18 @@ in a source file that has been read because of a
 \tcode{\#include}
 directive in another file,
 up to an \impldef{nesting limit for \tcode{\#include} directives} nesting limit.
+
+\pnum
+If the header identified by the \grammarterm{header-name}
+denotes an importable header\iref{module.import},
+it is
+\impldef{whether source file inclusion of importable header
+is replaced with \tcode{import} directive}
+whether the \tcode{\#include} preprocessing directive
+is instead replaced by an \tcode{import} directive\iref{cpp.import} of the form
+\begin{ncbnf}
+\terminal{import} header-name \terminal{;} new-line
+\end{ncbnf}
 
 \pnum
 \begin{note}
@@ -565,7 +659,7 @@ directives:
 #if VERSION == 1
     #define INCFILE  "vers1.h"
 #elif VERSION == 2
-    #define INCFILE  "vers2.h"   // and so on
+    #define INCFILE  "vers2.h"  // and so on
 #else
     #define INCFILE  "versN.h"
 #endif
@@ -573,10 +667,181 @@ directives:
 \end{codeblock}
 \end{example}
 
+\rSec1[cpp.import]{Header unit importation}
+\indextext{header unit!preprocessing}%
+\indextext{macro!import|(}%
+
+\begin{bnf}
+\nontermdef{pp-import}\br
+    \opt{\terminal{export}} \terminal{import} header-name \opt{pp-tokens} \terminal{;} new-line\br
+    \opt{\terminal{export}} \terminal{import} header-name-tokens \opt{pp-tokens} \terminal{;} new-line\br
+    \opt{\terminal{export}} \terminal{import} pp-tokens \terminal{;} new-line
+\end{bnf}
+
+\pnum
+The preprocessing tokens after the \tcode{import} preprocessing token
+in the \tcode{import} \grammarterm{control-line}
+are processed just as in normal text
+(i.e., each identifier currently defined as a macro name
+is replaced by its replacement list of preprocessing tokens).
+An \tcode{import} directive
+matching the first two forms of a \grammarterm{pp-import}
+instructs the preprocessor to import macros
+from the header unit\iref{module.import}
+denoted by the \grammarterm{header-name}.
+\indextext{point of!macro import|see{macro, point of import}}%
+The \defnx{point of macro import}{macro!point of import} for the
+first two forms of \grammarterm{pp-import} is
+immediately after the \grammarterm{new-line} terminating
+the \grammarterm{pp-import}.
+The last form of \grammarterm{pp-import} is only considered
+if the first two forms did not match.
+
+\pnum
+In all three forms of \grammarterm{pp-import},
+the \tcode{import} token is replaced by the \grammarterm{import-keyword} token.
+Additionally, in the second form of \grammarterm{pp-import},
+a \grammarterm{header-name} token is formed as if
+the \grammarterm{header-name-tokens}
+were the \grammarterm{pp-tokens} of a \tcode{\#include} directive.
+The \grammarterm{header-name-tokens} are replaced by
+the \grammarterm{header-name} token.
+\begin{note}
+This ensures that imports are treated consistently by
+the preprocessor and later phases of translation.
+\end{note}
+
+\pnum
+Each \tcode{\#define} directive encountered when preprocessing
+each translation unit in a program results in a distinct
+\defnx{macro definition}{macro!definition}.
+\begin{note}
+A predefined macro name\iref{cpp.predefined}
+is not introduced by a \tcode{\#define} directive.
+Implementations providing mechanisms to predefine additional macros
+are encouraged to not treat them
+as being introduced by a \tcode{\#define} directive.
+\end{note}
+Importing macros from a header unit makes macro definitions
+from a translation unit visible in other translation units.
+Each macro definition has at most one point of definition in
+each translation unit and at most one point of undefinition, as follows:
+\begin{itemize}
+\item
+\indextext{point of!macro definition|see{macro, point of definition}}%
+The \defnx{point of definition}{macro!point of definition}
+of a macro definition within a translation unit
+is the point at which its \tcode{\#define} directive occurs (in the translation
+unit containing the \tcode{\#define} directive), or,
+if the macro name is not lexically identical to a keyword\iref{lex.key}
+or to the \grammarterm{identifier}{s} \tcode{module} or \tcode{import},
+the first point
+of macro import of a translation unit containing a point of definition for the
+macro definition, if any (in any other translation unit).
+
+\item
+\indextext{point of!macro undefinition|see{macro, point of undefinition}}%
+The \defnx{point of undefinition}{macro!point of undefinition}
+of a macro definition within a translation unit
+is the first point at which a \tcode{\#undef} directive naming the macro occurs
+after its point of definition, or the first point
+of macro import of a translation unit containing a point of undefinition for the
+macro definition, whichever (if any) occurs first.
+\end{itemize}
+
+\pnum
+\indextext{active macro directive|see{macro, active}}%
+A macro directive is \defnx{active}{macro!active} at a source location
+if it has a point of definition in that translation unit preceding the location,
+and does not have a point of undefinition in that translation unit preceding
+the location.
+
+\pnum
+If a macro would be replaced or redefined, and multiple macro definitions
+are active for that macro name, the active macro definitions shall all be
+valid redefinitions of the same macro\iref{cpp.replace}.
+\begin{note}
+The relative order of \grammarterm{pp-import}{s} has no bearing on whether a
+particular macro definition is active.
+\end{note}
+
+\pnum
+\begin{example}
+\begin{codeblocktu}{Importable header \tcode{"a.h"}}
+#define X 123   // \#1
+#define Y 45    // \#2
+#define Z a     // \#3
+#undef X        // point of undefinition of \#1 in \tcode{"a.h"}
+\end{codeblocktu}
+
+\begin{codeblocktu}{Importable header \tcode{"b.h"}}
+import "a.h";   // point of definition of \#1, \#2, and \#3, point of undefinition of \#1 in \tcode{"b.h"}
+#define X 456   // OK, \#1 is not active
+#define Y 6     // error: \#2 is active
+\end{codeblocktu}
+
+\begin{codeblocktu}{Importable header \tcode{"c.h"}}
+#define Y 45    // \#4
+#define Z c     // \#5
+\end{codeblocktu}
+
+\begin{codeblocktu}{Importable header \tcode{"d.h"}}
+import "a.h";   // point of definition of \#1, \#2, and \#3, point of undefinition of \#1 in \tcode{"d.h"}
+import "c.h";   // point of definition of \#4 and \#5 in \tcode{"d.h"}
+int a = Y;      // OK, active macro definitions \#2 and \#4 are valid redefinitions
+int c = Z;      // error: active macro definitions \#3 and \#5 are not valid redefinitions of \tcode{Z}
+\end{codeblocktu}
+\end{example}
+\indextext{macro!import|)}
+
+\rSec1[cpp.global.frag]{Global module fragment}
+
+\begin{bnf}
+\nontermdef{pp-global-module-fragment}\br
+    \terminal{module} \terminal{;} pp-balanced-token-seq \terminal{module}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{pp-balanced-token-seq}\br
+    pp-balanced-token\br
+    pp-balanced-token-seq pp-balanced-token
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{pp-balanced-token}\br
+    pp-ldelim \opt{pp-balanced-token-seq} pp-rdelim\br
+    \descr{any \grammarterm{preprocessing-token} other than a \grammarterm{pp-ldelim} or \grammarterm{pp-rdelim}}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{pp-ldelim} \descr{one of}\br
+  \terminal{(    [    \{    <:    <\%}
+\end{bnf}
+
+\begin{bnf}
+\nontermdef{pp-rdelim} \descr{one of}\br
+  \terminal{)    ]    \}    :>    \%>}
+\end{bnf}
+
+\pnum
+If the first two preprocessing tokens at the start of phase 4 of translation
+are \tcode{module} \tcode{;},
+the result of preprocessing shall begin with
+a \grammarterm{pp-global-module-fragment}
+for which all \grammarterm{preprocessing-token}{s}
+in the \grammarterm{pp-balanced-token-seq}
+were produced directly or indirectly by source file inclusion\iref{cpp.include},
+and for which the second \tcode{module} \grammarterm{preprocessing-token}
+was not produced by source file inclusion or
+macro replacement\iref{cpp.replace}.
+Otherwise,
+the first two preprocessing tokens at the end of phase 4 of translation
+shall not be \tcode{module} \tcode{;}.
+
 \rSec1[cpp.replace]{Macro replacement}%
 \indextext{macro!replacement|(}%
 \indextext{replacement!macro|see{macro, replacement}}%
-\indextext{preprocessing directives!macro replacement|see{macro, replacement}}
+\indextext{preprocessing directive!macro replacement|see{macro, replacement}}
 
 \pnum
 \indextext{macro!replacement list}%
@@ -587,7 +852,6 @@ where all white-space separations are considered identical.
 
 \pnum
 An identifier currently defined as an
-\indextext{object-like macro|see{macro, object-like}}%
 \indextext{macro!object-like}%
 object-like macro (see below) may be redefined by another
 \tcode{\#define}
@@ -595,7 +859,6 @@ preprocessing directive provided that the second definition is an
 object-like macro definition and the two replacement lists
 are identical, otherwise the program is ill-formed.
 Likewise, an identifier currently defined as a
-\indextext{function-like macro|see{macro, function-like}}%
 \indextext{macro!function-like}%
 function-like macro (see below) may be redefined by another
 \tcode{\#define}
@@ -604,6 +867,26 @@ function-like macro definition that has the same number and spelling
 of parameters,
 and the two replacement lists are identical,
 otherwise the program is ill-formed.
+
+\pnum
+\begin{example}
+The following sequence is valid:
+\begin{codeblock}
+#define OBJ_LIKE      (1-1)
+#define OBJ_LIKE      @\tcode{/* white space */ (1-1) /* other */}@
+#define FUNC_LIKE(a)   ( a )
+#define FUNC_LIKE( a )(     @\tcode{/* note the white space */ \textbackslash}@
+                a @\tcode{/* other stuff on this line}@
+                  @\tcode{*/}@ )
+\end{codeblock}
+But the following redefinitions are invalid:
+\begin{codeblock}
+#define OBJ_LIKE    (0)         // different token sequence
+#define OBJ_LIKE    (1 - 1)     // different white space
+#define FUNC_LIKE(b) ( a )      // different parameter usage
+#define FUNC_LIKE(b) ( b )      // different parameter spelling
+\end{codeblock}
+\end{example}
 
 \pnum
 \indextext{macro!replacement list}%
@@ -615,7 +898,8 @@ If the \grammarterm{identifier-list} in the macro definition does not end with
 an ellipsis, the number of arguments (including those arguments consisting
 of no preprocessing tokens)
 in an invocation of a function-like macro shall
-equal the number of parameters in the macro definition. Otherwise, there shall be more arguments in the invocation than there are
+equal the number of parameters in the macro definition.
+Otherwise, there shall be at least as many arguments in the invocation as there are
 parameters in the macro definition (excluding the \tcode{...}). There
 shall exist a
 \tcode{)}
@@ -623,7 +907,9 @@ preprocessing token that terminates the invocation.
 
 \pnum
 \indextext{__VA_ARGS__@\mname{VA_ARGS}}%
-The identifier \mname{VA_ARGS} shall occur only in the replacement-list
+\indextext{__VA_OPT__@\mname{VA_OPT}}%
+The identifiers \mname{VA_ARGS} and \mname{VA_OPT}
+shall occur only in the \grammarterm{replacement-list}
 of a function-like macro that uses the ellipsis notation in the parameters.
 
 \pnum
@@ -634,9 +920,8 @@ shall be uniquely declared within its scope.
 The identifier immediately following the
 \tcode{define}
 is called the
-\indextext{macro!name}%
 \indextext{name!macro|see{macro, name}}%
-\term{macro name}.
+\defnx{macro name}{macro!name}.
 There is one name space for macro names.
 Any white-space characters preceding or following the
 replacement list of preprocessing tokens are not considered
@@ -644,7 +929,7 @@ part of the replacement list for either form of macro.
 
 \pnum
 If a
-\indextext{\#\#0~operator@\tcode{\#}~operator}
+\indextext{\#\#0 operator@\tcode{\#} operator}
 \tcode{\#}
 preprocessing token,
 followed by an identifier,
@@ -654,22 +939,19 @@ the identifier is not subject to macro replacement.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\# define} identifier replacement-list new-line
 \indextext{\idxcode{\#define}}%
 \end{ncsimplebnf}
-
 defines an
-\indextext{macro!object-like}%
-\defn{object-like macro} that
+\defnadj{object-like}{macro} that
 causes each subsequent instance of the macro name\footnote{Since, by macro-replacement time,
 all character literals and string literals are preprocessing tokens,
 not sequences possibly containing identifier-like subsequences
 (see \ref{lex.phases}, translation phases),
 they are never scanned for macro names or parameters.}
 to be replaced by the replacement list of preprocessing tokens
-that constitute the remainder of the directive.\footnote{An alternative token~(\ref{lex.digraph}) is not an identifier,
+that constitute the remainder of the directive.\footnote{An alternative token\iref{lex.digraph} is not an identifier,
 even when its spelling consists entirely of letters and underscores.
 Therefore it is not possible to define a macro
 whose name is the same as that of an alternative token.}
@@ -677,20 +959,27 @@ The replacement list is then rescanned for more macro names as
 specified below.
 
 \pnum
+\begin{example}
+The simplest use of this facility is to define a ``manifest constant'',
+as in
+\begin{codeblock}
+#define TABSIZE 100
+int table[TABSIZE];
+\end{codeblock}
+\end{example}
+
+\pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# define} identifier lparen identifier-list\opt{} \terminal{)} replacement-list new-line\br
+\terminal{\# define} identifier lparen \opt{identifier-list} \terminal{)} replacement-list new-line\br
 \terminal{\# define} identifier lparen \terminal{...} \terminal{)} replacement-list new-line\br
-\terminal{\# define} identifier lparen identifier-list \terminal{, ...} \terminal{)} replacement-list new-line\br
+\terminal{\# define} identifier lparen identifier-list \terminal{, ...} \terminal{)} replacement-list new-line
 \end{ncsimplebnf}
-
-\indextext{macro!function-like}%
-defines a \defn{function-like macro}
+defines a \defnadj{function-like}{macro}
 with parameters, whose use is
 similar syntactically to a function call.
 The parameters
-\indextext{parameters!macro}%
+\indextext{parameter!macro}%
 are specified by the optional list of identifiers,
 whose scope extends from their declaration in the identifier list
 until the new-line character that terminates the
@@ -721,49 +1010,175 @@ are separated by comma preprocessing tokens,
 but comma preprocessing tokens between matching
 inner parentheses do not separate arguments.
 If there are sequences of preprocessing tokens within the list of
-arguments that would otherwise act as preprocessing directives,\footnote{Despite the name, a non-directive is a preprocessing directive.}
+arguments that would otherwise act as preprocessing directives,\footnote{A \grammarterm{conditionally-supported-directive} is a preprocessing directive regardless of whether the implementation supports it.}
 the behavior is undefined.
+
+\pnum
+\begin{example}
+The following defines a function-like
+macro whose value is the maximum of its arguments.
+It has the disadvantages of evaluating one or the other of its arguments
+a second time
+(including
+\indextext{side effects}%
+side effects)
+and generating more code than a function if invoked several times.
+It also cannot have its address taken,
+as it has none.
+
+\begin{codeblock}
+#define max(a, b) ((a) > (b) ? (a) : (b))
+\end{codeblock}
+
+The parentheses ensure that the arguments and
+the resulting expression are bound properly.
+\end{example}
 
 \pnum
 \indextext{macro!function-like!arguments}%
 If there is a \tcode{...} immediately preceding the \tcode{)} in the
 function-like macro
-definition, then the trailing arguments, including any separating comma preprocessing
-tokens, are merged to form a single item: the \term{variable arguments}. The number of
+definition, then the trailing arguments (if any), including any separating comma preprocessing
+tokens, are merged to form a single item: the \defn{variable arguments}. The number of
 arguments so combined is such that, following merger, the number of arguments is
+either equal to or
 one more than the number of parameters in the macro definition (excluding the
 \tcode{...}).
 
 \rSec2[cpp.subst]{Argument substitution}%
 \indextext{macro!argument substitution}%
-\indextext{argument~substitution|see{macro, argument substitution}}%
+\indextext{argument substitution|see{macro, argument substitution}}%
+
+\indextext{__VA_OPT__@\mname{VA_OPT}}%
+\begin{bnf}
+\nontermdef{va-opt-replacement}\br
+    \terminal{\mname{VA_OPT} (} \opt{pp-tokens} \terminal{)}
+\end{bnf}
 
 \pnum
 After the arguments for the invocation of a function-like macro have
 been identified, argument substitution takes place.
-A parameter in the replacement list, unless preceded by a
-\tcode{\#}
-or
-\tcode{\#\#}
-preprocessing token or followed by a
-\tcode{\#\#}
-preprocessing token (see below),
-is replaced by the corresponding argument after all macros
-contained therein have been expanded.
-Before being substituted,
-each argument's preprocessing tokens are completely
-macro replaced as if they formed the rest of the
-preprocessing file;
-no other preprocessing tokens are available.
+For each parameter in the replacement list that is neither
+preceded by a \tcode{\#} or \tcode{\#\#} preprocessing token nor
+followed by a \tcode{\#\#} preprocessing token, the preprocessing tokens
+naming the parameter are replaced by a token sequence determined as follows:
+\begin{itemize}
+\item
+  If the parameter is of the form \grammarterm{va-opt-replacement},
+  the replacement preprocessing tokens are the
+  preprocessing token sequence for the corresponding argument,
+  as specified below.
+\item
+  Otherwise, the replacement preprocessing tokens are the
+  preprocessing tokens of corresponding argument after all
+  macros contained therein have been expanded. The argument's
+  preprocessing tokens are completely macro replaced before
+  being substituted as if they formed the rest of the preprocessing
+  file with no other preprocessing tokens being available.
+\end{itemize}
+\begin{example}
+\begin{codeblock}
+#define LPAREN() (
+#define G(Q) 42
+#define F(R, X, ...)  __VA_OPT__(G R X) )
+int x = F(LPAREN(), 0, <:-);    // replaced by \tcode{int x = 42;}
+\end{codeblock}
+\end{example}
 
 \pnum
+\indextext{__VA_ARGS__@\mname{VA_ARGS}}%
 An identifier \mname{VA_ARGS} that occurs in the replacement list
 shall be treated as if it were a parameter, and the variable arguments shall form
 the preprocessing tokens used to replace it.
 
+\pnum
+\begin{example}
+\begin{codeblock}
+#define debug(...) fprintf(stderr, @\mname{VA_ARGS}@)
+#define showlist(...) puts(#@\mname{VA_ARGS}@)
+#define report(test, ...) ((test) ? puts(#test) : printf(@\mname{VA_ARGS}@))
+debug("Flag");
+debug("X = %d\n", x);
+showlist(The first, second, and third items.);
+report(x>y, "x is %d but y is %d", x, y);
+\end{codeblock}
+results in
+\begin{codeblock}
+fprintf(stderr, "Flag");
+fprintf(stderr, "X = %d\n", x);
+puts("The first, second, and third items.");
+((x>y) ? puts("x>y") : printf("x is %d but y is %d", x, y));
+\end{codeblock}
+\end{example}
+
+\pnum
+\indextext{__VA_OPT__@\mname{VA_OPT}}%
+The identifier \mname{VA_OPT}
+shall always occur as part of the preprocessing token sequence
+\grammarterm{va-opt-replacement};
+its closing \tcode{)} is determined by skipping
+intervening pairs of matching left and right parentheses
+in its \grammarterm{pp-tokens}.
+The \grammarterm{pp-tokens} of a \grammarterm{va-opt-replacement}
+shall not contain \mname{VA_OPT}.
+If the \grammarterm{pp-tokens} would be ill-formed
+as the replacement list of the current function-like macro,
+the program is ill-formed.
+A \grammarterm{va-opt-replacement} is treated as if it were a parameter,
+and the preprocessing token sequence for the corresponding
+argument is defined as follows.
+If the substitution of \mname{VA_ARGS} as neither an operand
+of \tcode{\#} nor \tcode{\#\#} consists of no preprocessing tokens,
+the argument consists of
+a single placemarker preprocessing token~(\ref{cpp.concat}, \ref{cpp.rescan}).
+Otherwise, the argument consists of
+the results of the expansion of the contained \grammarterm{pp-tokens}
+as the replacement list of the current function-like macro
+before removal of placemarker tokens, rescanning, and further replacement.
+\begin{note}
+The placemarker tokens are removed before stringization\iref{cpp.stringize},
+and can be removed by rescanning and further replacement\iref{cpp.rescan}.
+\end{note}
+\begin{example}
+\begin{codeblock}
+#define F(...)           f(0 __VA_OPT__(,) __VA_ARGS__)
+#define G(X, ...)        f(0, X __VA_OPT__(,) __VA_ARGS__)
+#define SDEF(sname, ...) S sname __VA_OPT__(= { __VA_ARGS__ })
+#define EMP
+
+F(a, b, c)          // replaced by \tcode{f(0, a, b, c)}
+F()                 // replaced by \tcode{f(0)}
+F(EMP)              // replaced by \tcode{f(0)}
+
+G(a, b, c)          // replaced by \tcode{f(0, a, b, c)}
+G(a, )              // replaced by \tcode{f(0, a)}
+G(a)                // replaced by \tcode{f(0, a)}
+
+SDEF(foo);          // replaced by \tcode{S foo;}
+SDEF(bar, 1, 2);    // replaced by \tcode{S bar = \{ 1, 2 \};}
+
+#define H1(X, ...) X __VA_OPT__(##) __VA_ARGS__ // error: \tcode{\#\#} may not appear at
+                                                // the beginning of a replacement list\iref{cpp.concat}
+
+#define H2(X, Y, ...) __VA_OPT__(X ## Y,) __VA_ARGS__
+H2(a, b, c, d)      // replaced by \tcode{ab, c, d}
+
+#define H3(X, ...) #__VA_OPT__(X##X X##X)
+H3(, 0)             // replaced by \tcode{""}
+
+#define H4(X, ...) __VA_OPT__(a X ## X) ## b
+H4(, 1)             // replaced by \tcode{a b}
+
+#define H5A(...) __VA_OPT__()@\tcode{/**/}@__VA_OPT__()
+#define H5B(X) a ## X ## b
+#define H5C(X) H5B(X)
+H5C(H5A())          // replaced by \tcode{ab}
+\end{codeblock}
+\end{example}
+
 \rSec2[cpp.stringize]{The \tcode{\#} operator}%
-\indextext{\#\#0~operator@\tcode{\#}~operator}%
-\indextext{stringize|see{\tcode{\#}}}
+\indextext{\#\#0 operator@\tcode{\#} operator}%
+\indextext{stringize|see{\tcode{\#} operator}}
 
 \pnum
 Each
@@ -780,13 +1195,15 @@ preceded by a
 preprocessing token,
 both are replaced by a single character string literal preprocessing token that
 contains the spelling of the preprocessing token sequence for the
-corresponding argument.
-Each occurrence of white space between the argument's preprocessing
+corresponding argument (excluding placemarker tokens).
+Let the \defn{stringizing argument} be the preprocessing token sequence
+for the corresponding argument with placemarker tokens removed.
+Each occurrence of white space between the stringizing argument's preprocessing
 tokens becomes a single space character in the character string literal.
 White space before the first preprocessing token and after the last
-preprocessing token comprising the argument is deleted.
+preprocessing token comprising the stringizing argument is deleted.
 Otherwise, the original spelling of each preprocessing token in the
-argument is retained in the character string literal,
+stringizing argument is retained in the character string literal,
 except for special handling for producing the spelling of
 string literals and character literals:
 a
@@ -801,7 +1218,7 @@ character of a character literal or string literal
 characters).
 If the replacement that results is not a valid character string literal,
 the behavior is undefined. The character string literal corresponding to
-an empty argument is \tcode{""}.
+an empty stringizing argument is \tcode{""}.
 The order of evaluation of
 \tcode{\#}
 and
@@ -810,7 +1227,7 @@ operators is unspecified.
 
 \rSec2[cpp.concat]{The \tcode{\#\#} operator}%
 \indextext{\#\#1 operator@\tcode{\#\#} operator}%
-\indextext{concatenation!macro argument|see{\tcode{\#\#}}}
+\indextext{concatenation!macro argument|see{\tcode{\#\#} operator}}
 
 \pnum
 A
@@ -848,15 +1265,58 @@ The order of evaluation of
 \tcode{\#\#}
 operators is unspecified.
 
-\begin{example} In the following fragment:
+\pnum
+\begin{example}
+The sequence
+\begin{codeblock}
+#define str(s)      # s
+#define xstr(s)     str(s)
+#define debug(s, t) printf("x" # s "= %d, x" # t "= %s", @\textbackslash@
+               x ## s, x ## t)
+#define INCFILE(n)  vers ## n
+#define glue(a, b)  a ## b
+#define xglue(a, b) glue(a, b)
+#define HIGHLOW     "hello"
+#define LOW         LOW ", world"
+
+debug(1, 2);
+fputs(str(strncmp("abc@\textbackslash@0d", "abc", '@\textbackslash@4')        // this goes away
+    == 0) str(: @\atsign\textbackslash@n), s);
+#include xstr(INCFILE(2).h)
+glue(HIGH, LOW);
+xglue(HIGH, LOW)
+\end{codeblock}
+results in
+\begin{codeblock}
+printf("x" "1" "= %d, x" "2" "= %s", x1, x2);
+fputs("strncmp(@\textbackslash@"abc@\textbackslash\textbackslash@0d@\textbackslash@", @\textbackslash@"abc@\textbackslash@", '@\textbackslash\textbackslash@4') == 0" ": @\atsign\textbackslash@n", s);
+#include "vers2.h"      @\textrm{(\textit{after macro replacement, before file access})}@
+"hello";
+"hello" ", world"
+\end{codeblock}
+or, after concatenation of the character string literals,
+\begin{codeblock}
+printf("x1= %d, x2= %s", x1, x2);
+fputs("strncmp(@\textbackslash@"abc@\textbackslash\textbackslash@0d@\textbackslash@", @\textbackslash@"abc@\textbackslash@", '@\textbackslash\textbackslash@4') == 0: @\atsign\textbackslash@n", s);
+#include "vers2.h"      @\textrm{(\textit{after macro replacement, before file access})}@
+"hello";
+"hello, world"
+\end{codeblock}
+
+Space around the \tcode{\#} and \tcode{\#\#} tokens in the macro definition
+is optional.
+\end{example}
+
+\pnum
+\begin{example}
+In the following fragment:
 
 \begin{codeblock}
 #define hash_hash # ## #
 #define mkstr(a) # a
 #define in_between(a) mkstr(a)
 #define join(c, d) in_between(c hash_hash d)
-char p[] = join(x, y);          // equivalent to
-                                // char p[] = "x \#\# y";
+char p[] = join(x, y);          // equivalent to \tcode{char p[] = "x \#\# y";}
 \end{codeblock}
 
 The expansion produces, at various stages:
@@ -871,7 +1331,23 @@ mkstr(x ## y)
 
 In other words, expanding \tcode{hash_hash} produces a new token,
 consisting of two adjacent sharp signs, but this new token is not the
-\tcode{\#\#} operator. \end{example}
+\tcode{\#\#} operator.
+\end{example}
+
+\pnum
+\begin{example}
+To illustrate the rules for placemarker preprocessing tokens, the sequence
+\begin{codeblock}
+#define t(x,y,z) x ## y ## z
+int j[] = { t(1,2,3), t(,4,5), t(6,,7), t(8,9,),
+  t(10,,), t(,11,), t(,,12), t(,,) };
+\end{codeblock}
+results in
+\begin{codeblock}
+int j[] = { 123, 45, 67, 89,
+  10, 11, 12, };
+\end{codeblock}
+\end{example}
 
 \rSec2[cpp.rescan]{Rescanning and further replacement}%
 \indextext{macro!rescanning and replacement}%
@@ -883,6 +1359,40 @@ place, all placemarker preprocessing tokens are removed. Then
 the resulting preprocessing token sequence is rescanned, along with all
 subsequent preprocessing tokens of the source file, for more macro names
 to replace.
+
+\pnum
+\begin{example}
+The sequence
+\begin{codeblock}
+#define x       3
+#define f(a)    f(x * (a))
+#undef  x
+#define x       2
+#define g       f
+#define z       z[0]
+#define h       g(~
+#define m(a)    a(w)
+#define w       0,1
+#define t(a)    a
+#define p()     int
+#define q(x)    x
+#define r(x,y)  x ## y
+#define str(x)  # x
+
+f(y+1) + f(f(z)) % t(t(g)(0) + t)(1);
+g(x+(3,4)-w) | h 5) & m
+    (f)^m(m);
+p() i[q()] = { q(1), r(2,3), r(4,), r(,5), r(,) };
+char c[2][6] = { str(hello), str() };
+\end{codeblock}
+results in
+\begin{codeblock}
+f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);
+f(2 * (2+(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);
+int i[] = { 1, 23, 4, 5, };
+char c[2][6] = { "hello", "" };
+\end{codeblock}
+\end{example}
 
 \pnum
 If the name of the macro being replaced is found during this scan of
@@ -919,209 +1429,18 @@ Macro definitions have no significance after translation phase 4.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\# undef} identifier new-line
 \indextext{\idxcode{\#undef}}%
 \end{ncsimplebnf}
-
 causes the specified identifier no longer to be defined as a macro name.
 It is ignored if the specified identifier is not currently defined as
 a macro name.
 
-\pnum
-\begin{example}
-The simplest use of this facility is to define a ``manifest constant,''
-as in
-\begin{codeblock}
-#define TABSIZE 100
-int table[TABSIZE];
-\end{codeblock}
-\end{example}
-
-\pnum
-\begin{example}
-The following defines a function-like
-macro whose value is the maximum of its arguments.
-It has the advantages of working for any compatible types of the arguments
-and of generating in-line code without the overhead of function calling.
-It has the disadvantages of evaluating one or the other of its arguments
-a second time
-(including
-\indextext{side effects}%
-side effects)
-and generating more code than a function if invoked several times.
-It also cannot have its address taken,
-as it has none.
-
-\begin{codeblock}
-#define max(a, b) ((a) > (b) ? (a) : (b))
-\end{codeblock}
-
-The parentheses ensure that the arguments and
-the resulting expression are bound properly.
-\end{example}
-
-\pnum
-\begin{example}
-To illustrate the rules for redefinition and reexamination,
-the sequence
-
-\begin{codeblock}
-#define x       3
-#define f(a)    f(x * (a))
-#undef  x
-#define x       2
-#define g       f
-#define z       z[0]
-#define h       g(~
-#define m(a)    a(w)
-#define w       0,1
-#define t(a)    a
-#define p()     int
-#define q(x)    x
-#define r(x,y)  x ## y
-#define str(x)  # x
-
-f(y+1) + f(f(z)) % t(t(g)(0) + t)(1);
-g(x+(3,4)-w) | h 5) & m
-    (f)^m(m);
-p() i[q()] = { q(1), r(2,3), r(4,), r(,5), r(,) };
-char c[2][6] = { str(hello), str() };
-\end{codeblock}
-
-results in
-
-\begin{codeblock}
-f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);
-f(2 * (2+(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);
-int i[] = { 1, 23, 4, 5, };
-char c[2][6] = { "hello", "" };
-\end{codeblock}
-\end{example}
-
-\pnum
-\begin{example}
-To illustrate the rules for creating character string literals
-and concatenating tokens,
-the sequence
-
-\begin{codeblock}
-#define str(s)      # s
-#define xstr(s)     str(s)
-#define debug(s, t) printf("x" # s "= %d, x" # t "= %s", @\textbackslash@
-               x ## s, x ## t)
-#define INCFILE(n)  vers ## n
-#define glue(a, b)  a ## b
-#define xglue(a, b) glue(a, b)
-#define HIGHLOW     "hello"
-#define LOW         LOW ", world"
-
-debug(1, 2);
-fputs(str(strncmp("abc@\textbackslash@0d", "abc", '@\textbackslash@4')  // this goes away
-    == 0) str(: @\atsign\textbackslash@n), s);
-#include xstr(INCFILE(2).h)
-glue(HIGH, LOW);
-xglue(HIGH, LOW)
-\end{codeblock}
-
-results in
-
-\begin{codeblock}
-printf("x" "1" "= %d, x" "2" "= %s", x1, x2);
-fputs("strncmp(@\textbackslash@"abc@\textbackslash\textbackslash@0d@\textbackslash@", @\textbackslash@"abc@\textbackslash@", '@\textbackslash\textbackslash@4') == 0" ": @\atsign\textbackslash@n", s);
-#include "vers2.h"    @\textit{(after macro replacement, before file access)}@
-"hello";
-"hello" ", world"
-\end{codeblock}
-
-or, after concatenation of the character string literals,
-
-\begin{codeblock}
-printf("x1= %d, x2= %s", x1, x2);
-fputs("strncmp(@\textbackslash@"abc@\textbackslash\textbackslash@0d@\textbackslash@", @\textbackslash@"abc@\textbackslash@", '@\textbackslash\textbackslash@4') == 0: @\atsign\textbackslash@n", s);
-#include "vers2.h"    @\textit{(after macro replacement, before file access)}@
-"hello";
-"hello, world"
-\end{codeblock}
-
-Space around the
-\tcode{\#}
-and
-\tcode{\#\#}
-tokens in the macro definition is optional.
-\end{example}
-
-\pnum
-\begin{example}
-To illustrate the rules for placemarker preprocessing tokens, the sequence
-
-\begin{codeblock}
-#define t(x,y,z) x ## y ## z
-int j[] = { t(1,2,3), t(,4,5), t(6,,7), t(8,9,),
-  t(10,,), t(,11,), t(,,12), t(,,) };
-\end{codeblock}
-
-results in
-
-\begin{codeblock}
-int j[] = { 123, 45, 67, 89,
-  10, 11, 12, };
-\end{codeblock}
-\end{example}
-
-\pnum
-\begin{example}
-To demonstrate the redefinition rules,
-the following sequence is valid.
-
-\begin{codeblock}
-#define OBJ_LIKE      (1-1)
-#define OBJ_LIKE      @\tcode{/* white space */ (1-1) /* other */}@
-#define FUNC_LIKE(a)   ( a )
-#define FUNC_LIKE( a )(     @\tcode{/* note the white space */ \textbackslash}@
-                a @\tcode{/* other stuff on this line}@
-                  @\tcode{*/}@ )
-\end{codeblock}
-
-But the following redefinitions are invalid:
-
-\begin{codeblock}
-#define OBJ_LIKE    (0)      // different token sequence
-#define OBJ_LIKE    (1 - 1)  // different white space
-#define FUNC_LIKE(b) ( a )   // different parameter usage
-#define FUNC_LIKE(b) ( b )   // different parameter spelling
-\end{codeblock}
-\end{example}
-
-\pnum
-\begin{example}
-Finally, to show the variable argument list macro facilities:
-
-\begin{codeblock}
-#define debug(...) fprintf(stderr, @\mname{VA_ARGS}@)
-#define showlist(...) puts(#@\mname{VA_ARGS}@)
-#define report(test, ...) ((test) ? puts(#test) : printf(@\mname{VA_ARGS}@))
-debug("Flag");
-debug("X = %d\n", x);
-showlist(The first, second, and third items.);
-report(x>y, "x is %d but y is %d", x, y);
-\end{codeblock}
-
-results in
-
-\begin{codeblock}
-fprintf(stderr, "Flag");
-fprintf(stderr, "X = %d\n", x);
-puts("The first, second, and third items.");
-((x>y) ? puts("x>y") : printf("x is %d but y is %d", x, y));
-  
-\end{codeblock}
-\end{example}
 \indextext{macro!replacement|)}
 
 \rSec1[cpp.line]{Line control}%
-\indextext{preprocessing directives!line control}%
+\indextext{preprocessing directive!line control}%
 \indextext{\idxcode{\#line}|see{preprocessing directives, line control}}
 
 \pnum
@@ -1132,19 +1451,17 @@ shall be a character string literal.
 
 \pnum
 The
-\term{line number}
+\defn{line number}
 of the current source line is one greater than
 the number of new-line characters read or introduced
-in translation phase 1~(\ref{lex.phases})
+in translation phase 1\iref{lex.phases}
 while processing the source file to the current token.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\# line} digit-sequence new-line
 \end{ncsimplebnf}
-
 causes the implementation to behave as if
 the following sequence of source lines begins with a
 source line that has a line number as specified
@@ -1155,22 +1472,18 @@ the behavior is undefined.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# line} digit-sequence \terminal{"} s-char-sequence\opt{} \terminal{"} new-line
+\terminal{\# line} digit-sequence \terminal{"} \opt{s-char-sequence} \terminal{"} new-line
 \end{ncsimplebnf}
-
 sets the presumed line number similarly and changes the
 presumed name of the source file to be the contents
 of the character string literal.
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\# line} pp-tokens new-line
 \end{ncsimplebnf}
-
 (that does not match one of the two previous forms)
 is permitted.
 The preprocessing tokens after
@@ -1183,47 +1496,41 @@ one of the two previous forms, the behavior is undefined;
 otherwise, the result is processed as appropriate.
 
 \rSec1[cpp.error]{Error directive}%
-\indextext{preprocessing directives!error}%
+\indextext{preprocessing directive!error}%
 \indextext{\idxcode{\#error}|see{preprocessing directives, error}}
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# error} pp-tokens\opt new-line
+\terminal{\# error} \opt{pp-tokens} new-line
 \end{ncsimplebnf}
-
 causes the implementation to produce
 a diagnostic message that includes the specified sequence of preprocessing tokens,
 and renders the program ill-formed.
 
 \rSec1[cpp.pragma]{Pragma directive}%
-\indextext{preprocessing directives!pragma}%
+\indextext{preprocessing directive!pragma}%
 \indextext{\idxcode{\#pragma}|see{preprocessing directives, pragma}}
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
-\terminal{\# pragma} pp-tokens\opt new-line
+\terminal{\# pragma} \opt{pp-tokens} new-line
 \end{ncsimplebnf}
-
 causes the implementation to behave
-in an \impldef{\#pragma@\tcode{\#pragma}} manner.
+in an \impldef{\tcode{\#pragma}} manner.
 The behavior might cause translation to fail or cause the translator or
 the resulting program to behave in a non-conforming manner.
 Any pragma that is not recognized by the implementation is ignored.
 
 \rSec1[cpp.null]{Null directive}%
-\indextext{preprocessing directives!null}
+\indextext{preprocessing directive!null}
 
 \pnum
 A preprocessing directive of the form
-
 \begin{ncsimplebnf}
 \terminal{\#} new-line
 \end{ncsimplebnf}
-
 has no effect.
 
 \rSec1[cpp.predefined]{Predefined macro names}
@@ -1235,20 +1542,19 @@ The following macro names shall be defined by the implementation:
 
 \begin{description}
 
+\item
 \indextext{__CPLUSPLUS@\xname{cplusplus}}%
-\item \xname{cplusplus}\\
-The name \xname{cplusplus} is defined
-to the value
-\tcode{\cppver}
-when
-compiling a \Cpp translation unit.\footnote{It is intended that future
-versions of this standard will
+\xname{cplusplus}\\
+The integer literal \tcode{\cppver}.
+\begin{note}
+It is intended that future
+versions of this International Standard will
 replace the value of this macro with a greater value.
-Non-conforming compilers should use a value with at most
-five decimal digits.}
+\end{note}
 
+\item
 \indextext{__DATE__@\mname{DATE}}%
-\item \mname{DATE}\\
+\mname{DATE}\\
 The date of translation of the source file:
 a character string literal of the form
 \tcode{"Mmm~dd~yyyy"},
@@ -1263,26 +1569,41 @@ If the date of translation is not available,
 an \impldef{text of \mname{DATE} when date of translation is not available} valid date
 shall be supplied.
 
+\item
 \indextext{__FILE__@\mname{FILE}}%
-\item \mname{FILE}\\
+\mname{FILE}\\
 The presumed name of the current source file (a character string
 literal).%
 \footnote{The presumed source file name can be changed by the \tcode{\#line} directive.}
 
+\item
 \indextext{__LINE__@\mname{LINE}}%
-\item \mname{LINE}\\
+\mname{LINE}\\
 The presumed line number (within the current source file) of the current source line
 (an integer literal).%
 \footnote{The presumed line number can be changed by the \tcode{\#line} directive.}
 
+\item
 \indextext{__STDC_HOSTED__@\mname{STDC_HOSTED}}%
-\indextext{__STDC_HOSTED__@\mname{STDC_HOSTED}!implementation-defined}%
-\item \mname{STDC_HOSTED}\\
+\mname{STDC_HOSTED}\\
 The integer literal \tcode{1} if the implementation is a hosted
 implementation or the integer literal \tcode{0} if it is not.
 
+\item
+\indextext{__STDCPP_DEFAULT_NEW_ALIGNMENT__@\mname{STDCPP_DEFAULT_NEW_ALIGNMENT}}%
+\mname{STDCPP_DEFAULT_NEW_ALIGNMENT}\\
+An integer literal of type \tcode{std::size_t}
+whose value is the alignment guaranteed
+by a call to \tcode{operator new(std::size_t)}
+or \tcode{operator new[](std::size_t)}.
+\begin{note}
+Larger alignments will be passed to
+\tcode{operator new(std::size_t, std::align_val_t)}, etc.\iref{expr.new}.
+\end{note}
+
+\item
 \indextext{__TIME__@\mname{TIME}}%
-\item \mname{TIME}\\
+\mname{TIME}\\
 The time of translation of the source file:
 a character string literal of the form
 \tcode{"hh:mm:ss"}
@@ -1291,65 +1612,129 @@ as in the time generated by the
 function.
 If the time of translation is not available,
 an \impldef{text of \mname{TIME} when time of translation is not available} valid time shall be supplied.
+
+\item The names listed in \tref{cpp.predefined.ft}.\\
+The macros defined in \tref{cpp.predefined.ft} shall be defined to
+the corresponding integer literal.
+\begin{note}
+Future versions of this International Standard might replace
+the values of these macros with greater values.
+\end{note}
 \end{description}
+
+\begin{LongTable}{Feature-test macros}{cpp.predefined.ft}{ll}
+\\ \topline
+\lhdr{Macro name} & \rhdr{Value} \\ \capsep
+\endfirsthead
+\continuedcaption \\
+\hline
+\lhdr{Name} & \rhdr{Value} \\ \capsep
+\endhead
+\defnxname{cpp_aggregate_bases}                   & \tcode{201603L} \\ \rowsep
+\defnxname{cpp_aggregate_nsdmi}                   & \tcode{201304L} \\ \rowsep
+\defnxname{cpp_aggregate_paren_init}              & \tcode{201902L} \\ \rowsep
+\defnxname{cpp_alias_templates}                   & \tcode{200704L} \\ \rowsep
+\defnxname{cpp_aligned_new}                       & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_attributes}                        & \tcode{200809L} \\ \rowsep
+\defnxname{cpp_binary_literals}                   & \tcode{201304L} \\ \rowsep
+\defnxname{cpp_capture_star_this}                 & \tcode{201603L} \\ \rowsep
+\defnxname{cpp_char8_t}                           & \tcode{201811L} \\ \rowsep
+\defnxname{cpp_concepts}                          & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_conditional_explicit}              & \tcode{201806L} \\ \rowsep
+\defnxname{cpp_constexpr}                         & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_constexpr_dynamic_alloc}           & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_constexpr_in_decltype}             & \tcode{201711L} \\ \rowsep
+\defnxname{cpp_consteval}                         & \tcode{201811L} \\ \rowsep
+\defnxname{cpp_constinit}                         & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_coroutines}                        & \tcode{201902L} \\ \rowsep
+\defnxname{cpp_decltype}                          & \tcode{200707L} \\ \rowsep
+\defnxname{cpp_decltype_auto}                     & \tcode{201304L} \\ \rowsep
+\defnxname{cpp_deduction_guides}                  & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_delegating_constructors}           & \tcode{200604L} \\ \rowsep
+\defnxname{cpp_designated_initializers}           & \tcode{201707L} \\ \rowsep
+\defnxname{cpp_enumerator_attributes}             & \tcode{201411L} \\ \rowsep
+\defnxname{cpp_fold_expressions}                  & \tcode{201603L} \\ \rowsep
+\defnxname{cpp_generic_lambdas}                   & \tcode{201707L} \\ \rowsep
+\defnxname{cpp_guaranteed_copy_elision}           & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_hex_float}                         & \tcode{201603L} \\ \rowsep
+\defnxname{cpp_if_constexpr}                      & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_impl_destroying_delete}            & \tcode{201806L} \\ \rowsep
+\defnxname{cpp_impl_three_way_comparison}         & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_inheriting_constructors}           & \tcode{201511L} \\ \rowsep
+\defnxname{cpp_init_captures}                     & \tcode{201803L} \\ \rowsep
+\defnxname{cpp_initializer_lists}                 & \tcode{200806L} \\ \rowsep
+\defnxname{cpp_inline_variables}                  & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_lambdas}                           & \tcode{200907L} \\ \rowsep
+\defnxname{cpp_modules}                           & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_namespace_attributes}              & \tcode{201411L} \\ \rowsep
+\defnxname{cpp_noexcept_function_type}            & \tcode{201510L} \\ \rowsep
+\defnxname{cpp_nontype_template_args}             & \tcode{201911L} \\ \rowsep
+\defnxname{cpp_nontype_template_parameter_auto}   & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_nsdmi}                             & \tcode{200809L} \\ \rowsep
+\defnxname{cpp_range_based_for}                   & \tcode{201603L} \\ \rowsep
+\defnxname{cpp_raw_strings}                       & \tcode{200710L} \\ \rowsep
+\defnxname{cpp_ref_qualifiers}                    & \tcode{200710L} \\ \rowsep
+\defnxname{cpp_return_type_deduction}             & \tcode{201304L} \\ \rowsep
+\defnxname{cpp_rvalue_references}                 & \tcode{200610L} \\ \rowsep
+\defnxname{cpp_sized_deallocation}                & \tcode{201309L} \\ \rowsep
+\defnxname{cpp_static_assert}                     & \tcode{201411L} \\ \rowsep
+\defnxname{cpp_structured_bindings}               & \tcode{201606L} \\ \rowsep
+\defnxname{cpp_template_template_args}            & \tcode{201611L} \\ \rowsep
+\defnxname{cpp_threadsafe_static_init}            & \tcode{200806L} \\ \rowsep
+\defnxname{cpp_unicode_characters}                & \tcode{200704L} \\ \rowsep
+\defnxname{cpp_unicode_literals}                  & \tcode{200710L} \\ \rowsep
+\defnxname{cpp_user_defined_literals}             & \tcode{200809L} \\ \rowsep
+\defnxname{cpp_using_enum}                        & \tcode{201907L} \\ \rowsep
+\defnxname{cpp_variable_templates}                & \tcode{201304L} \\ \rowsep
+\defnxname{cpp_variadic_templates}                & \tcode{200704L} \\ \rowsep
+\defnxname{cpp_variadic_using}                    & \tcode{201611L} \\ \rowsep
+\end{LongTable}
 
 \pnum
 The following macro names are conditionally defined by the implementation:
 
 \begin{description}
+\item
 \indextext{__STDC__@\mname{STDC}}%
-\indextext{__STDC__@\mname{STDC}!implementation-defined}%
-\item \mname{STDC}\\
+\mname{STDC}\\
 Whether \mname{STDC} is predefined and if so, what its value is,
 are \impldef{definition and meaning of \mname{STDC}}.
 
+\item
 \indextext{__STDC_MB_MIGHT_NEQ_WC__@\mname{STDC_MB_MIGHT_NEQ_WC}}%
-\indextext{__STDC_MB_MIGHT_NEQ_WC__@\mname{STDC_MB_MIGHT_NEQ_WC}!implementation-defined}%
-\item \mname{STDC_MB_MIGHT_NEQ_WC}\\
+\mname{STDC_MB_MIGHT_NEQ_WC}\\
 The integer literal \tcode{1}, intended to indicate that, in the encoding for
 \tcode{wchar_t}, a member of the basic character set need not have a code value equal to
 its value when used as the lone character in an ordinary character literal.
 
+\item
 \indextext{__STDC_VERSION__@\mname{STDC_VERSION}}%
-\indextext{__STDC_VERSION__@\mname{STDC_VERSION}!implementation-defined}%
-\item \mname{STDC_VERSION}\\
+\mname{STDC_VERSION}\\
 Whether \mname{STDC_VERSION} is predefined and if so, what its value is,
 are \impldef{definition and meaning of \mname{STDC_VERSION}}.
 
+\item
 \indextext{__STDC_ISO_10646__@\mname{STDC_ISO_10646}}%
-\indextext{__STDC_ISO_10646__@\mname{STDC_ISO_10646}!implementation-defined}%
-\item \mname{STDC_ISO_10646}\\
+\mname{STDC_ISO_10646}\\
 An integer literal of the form \tcode{yyyymmL} (for example,
 \tcode{199712L}).
 If this symbol is defined, then every character in the Unicode required set, when
-stored in an object of type \tcode{wchar_t}, has the same value as the short identifier
+stored in an object of type \tcode{wchar_t}, has the same value as the code point
 of that character. The \defn{Unicode required set} consists of all
 the characters that are defined by ISO/IEC 10646, along with
 all amendments and technical corrigenda as of the specified year and month.
 
-\indextext{__STDCPP_DEFAULT_NEW_ALIGNMENT__@\mname{STDCPP_DEFAULT_NEW_ALIGNMENT}}%
-\indextext{__STDCPP_DEFAULT_NEW_ALIGNMENT__@\mname{STDCPP_DEFAULT_NEW_ALIGNMENT}!implementation-defined}%
-\item \mname{STDCPP_DEFAULT_NEW_ALIGNMENT}\\
-An integer literal of type \tcode{std\colcol{}size_t}
-whose value is the alignment guaranteed
-by a call to \tcode{operator new(std::size_t)}
-or \tcode{operator new[](std::size_t)}.
-\begin{note}
-Larger alignments will be passed to
-\tcode{operator new(std::size_t, std::align_val_t)}, etc. (\ref{expr.new}).
-\end{note}
-
+\item
 \indextext{__STDCPP_STRICT_POINTER_SAFETY__@\mname{STDCPP_STRICT_POINTER_SAFETY}}%
-\indextext{__STDCPP_STRICT_POINTER_SAFETY__@\mname{STDCPP_STRICT_POINTER_SAFETY}!implementation-defined}%
-\item \mname{STDCPP_STRICT_POINTER_SAFETY}\\
+\mname{STDCPP_STRICT_POINTER_SAFETY}\\
 Defined, and has the value integer literal 1, if and only if the implementation
-has strict pointer safety~(\ref{basic.stc.dynamic.safety}).
+has strict pointer safety\iref{basic.stc.dynamic.safety}.
 
+\item
 \indextext{__STDCPP_THREADS__@\mname{STDCPP_THREADS}}%
-\indextext{__STDCPP_THREADS__@\mname{STDCPP_THREADS}!implementation-defined}%
-\item \mname{STDCPP_THREADS}\\
+\mname{STDCPP_THREADS}\\
 Defined, and has the value integer literal 1, if and only if a program
-can have more than one thread of execution~(\ref{intro.multithread}).
+can have more than one thread of execution\iref{intro.multithread}.
 
 \end{description}
 
@@ -1379,13 +1764,12 @@ underscore.
 \indextext{macro!pragma operator}%
 \indextext{operator!pragma|see{macro, pragma operator}}
 
+\pnum
 A unary operator expression of the form:
-
 \begin{ncbnf}
 \terminal{_Pragma} \terminal{(} string-literal \terminal{)}
 \end{ncbnf}
-
-is processed as follows: The string literal is \term{destringized}
+is processed as follows: The string literal is \defnx{destringized}{destringization}
 by deleting the \tcode{L} prefix, if present, deleting the leading and trailing
 double-quotes, replacing each escape sequence \tcode{\textbackslash"} by a double-quote, and
 replacing each escape sequence \tcode{\textbackslash\textbackslash} by a single
@@ -1394,27 +1778,22 @@ to produce preprocessing tokens that are executed as if they were the
 \grammarterm{pp-tokens} in a pragma directive. The original four preprocessing
 tokens in the unary operator expression are removed.
 
+\pnum
 \begin{example}
-
 \begin{codeblock}
 #pragma listing on "..\listing.dir"
 \end{codeblock}
-
 can also be expressed as:
-
 \begin{codeblock}
 _Pragma ( "listing on \"..\\listing.dir\"" )
 \end{codeblock}
-
 The latter form is processed in the same way whether it appears literally
 as shown, or results from macro replacement, as in:
-
 \begin{codeblock}
 #define LISTING(x) PRAGMA(listing on #x)
 #define PRAGMA(x) _Pragma(#x)
 
 LISTING( ..\listing.dir )
 \end{codeblock}
-
-\end{example}%
-\indextext{preprocessing directives|)}
+\end{example}
+\indextext{preprocessing directive|)}

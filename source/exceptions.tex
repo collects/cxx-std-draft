@@ -5,7 +5,9 @@
 \gramSec[gram.except]{Exception handling}
 
 \indextext{exception object|see{exception handling, exception object}}%
-\indextext{object, exception|see{exception handling, exception object}}
+\indextext{object!exception|see{exception handling, exception object}}
+
+\rSec1[except.pre]{Preamble}
 
 \pnum
 Exception handling provides a way of transferring control and information
@@ -26,40 +28,42 @@ or in functions called from the handler's try block.
 %
 \begin{bnf}
 \nontermdef{function-try-block}\br
-    \terminal{try} ctor-initializer\opt compound-statement handler-seq
+    \terminal{try} \opt{ctor-initializer} compound-statement handler-seq
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{handler-seq}\br
-    handler handler-seq\opt
+    handler \opt{handler-seq}
 \end{bnf}
 
 \indextext{\idxcode{catch}}%
 %
 \begin{bnf}
 \nontermdef{handler}\br
-    \terminal{catch (} exception-declaration \terminal{)} compound-statement
+    \terminal{catch} \terminal{(} exception-declaration \terminal{)} compound-statement
 \end{bnf}
 
 \begin{bnf}
 \nontermdef{exception-declaration}\br
-    attribute-specifier-seq\opt type-specifier-seq declarator\br
-    attribute-specifier-seq\opt type-specifier-seq abstract-declarator\opt\br
+    \opt{attribute-specifier-seq} type-specifier-seq declarator\br
+    \opt{attribute-specifier-seq} type-specifier-seq \opt{abstract-declarator}\br
     \terminal{...}
 \end{bnf}
 
 The optional \grammarterm{attribute-specifier-seq} in an \grammarterm{exception-declaration}
-appertains to the parameter of the catch clause~(\ref{except.handle}).
+appertains to the parameter of the catch clause\iref{except.handle}.
 
 \pnum
 \indextext{exception handling!try block}%
 \indextext{exception handling!handler}%
 \indextext{try block|see{exception handling, try block}}%
 \indextext{handler|see{exception handling, handler}}%
-A \grammarterm{try-block} is a \grammarterm{statement} (Clause~\ref{stmt.stmt}).
-\begin{note} Within this Clause
+A \grammarterm{try-block} is a \grammarterm{statement}\iref{stmt.pre}.
+\begin{note}
+Within this Clause
 ``try block'' is taken to mean both \grammarterm{try-block} and
-\grammarterm{function-try-block}. \end{note}
+\grammarterm{function-try-block}.
+\end{note}
 
 \pnum
 \indextext{exception handling!\idxcode{goto}}%
@@ -73,15 +77,15 @@ into a try block or into a handler.
 \begin{example}
 \begin{codeblock}
 void f() {
-  goto l1;          // Ill-formed
-  goto l2;          // Ill-formed
+  goto l1;          // error
+  goto l2;          // error
   try {
     goto l1;        // OK
-    goto l2;        // Ill-formed
+    goto l2;        // error
     l1: ;
   } catch (...) {
     l2: ;
-    goto l1;        // Ill-formed
+    goto l1;        // error
     goto l2;        // OK
   }
 }
@@ -108,16 +112,15 @@ When this happens, each variable declared in the try block
 will be destroyed in the context that
 directly contains its declaration.
 \begin{example}
-
 \begin{codeblock}
 lab:  try {
   T1 t1;
   try {
     T2 t2;
-    if (@\textit{condition}@)
+    if (@\grammarterm{condition}@)
       goto lab;
-    } catch(...) { /* @\textit{handler 2}@ */ }
-  } catch(...) { /* @\textit{handler 1}@ */ }
+    } catch(...) { @\tcode{/* handler 2 */}@ }
+  } catch(...) { @\tcode{/* handler 1 */}@ }
 \end{codeblock}
 
 Here, executing
@@ -129,14 +132,14 @@ then
 assuming the
 \grammarterm{condition}
 does not declare a variable.
-Any exception raised while destroying
+Any exception thrown while destroying
 \tcode{t2}
 will result in executing
-\textit{handler 2};
-any exception raised while destroying
+\tcode{handler 2};
+any exception thrown while destroying
 \tcode{t1}
 will result in executing
-\textit{handler 1}.
+\tcode{handler 1}.
 \end{example}
 
 \pnum
@@ -173,18 +176,15 @@ public:
 C::C(int ii, double id)
 try : i(f(ii)), d(id) {
     // constructor statements
+} catch (...) {
+    // handles exceptions thrown from the ctor-initializer and from the constructor statements
 }
-catch (...) {
-    // handles exceptions thrown from the ctor-initializer
-    // and from the constructor statements
-}
-
 \end{codeblock}
 \end{example}
 
 \pnum
-In this section, ``before'' and ``after'' refer to the
-``sequenced before'' relation~(\ref{intro.execution}).
+In this Clause, ``before'' and ``after'' refer to the
+``sequenced before'' relation\iref{intro.execution}.
 
 \rSec1[except.throw]{Throwing an exception}%
 \indextext{exception handling!throwing}%
@@ -194,12 +194,12 @@ In this section, ``before'' and ``after'' refer to the
 Throwing an exception transfers control to a handler.
 \begin{note}
 An exception can be thrown from one of the following contexts:
-\grammarterm{throw-expression}{s}~(\ref{expr.throw}),
-allocation functions~(\ref{basic.stc.dynamic.allocation}),
-\tcode{dynamic_cast}~(\ref{expr.dynamic.cast}),
-\tcode{typeid}~(\ref{expr.typeid}),
-\grammarterm{new-expression}{s}~(\ref{expr.new}), and standard library
-functions~(\ref{structure.specifications}).
+\grammarterm{throw-expression}{s}\iref{expr.throw},
+allocation functions\iref{basic.stc.dynamic.allocation},
+\tcode{dynamic_cast}\iref{expr.dynamic.cast},
+\tcode{typeid}\iref{expr.typeid},
+\grammarterm{new-expression}{s}\iref{expr.new}, and standard library
+functions\iref{structure.specifications}.
 \end{note}
 An object is passed and the type of that object determines which handlers
 can catch it.
@@ -208,7 +208,7 @@ can catch it.
 throw "Help!";
 \end{codeblock}
 can be caught by a
-\term{handler}
+\grammarterm{handler}
 of
 \tcode{const}
 \tcode{char*}
@@ -216,8 +216,7 @@ type:
 \begin{codeblock}
 try {
     // ...
-}
-catch(const char* p) {
+} catch(const char* p) {
     // handle character string exceptions here
 }
 \end{codeblock}
@@ -233,7 +232,7 @@ void f(double x) {
 }
 \end{codeblock}
 can be caught by a handler for exceptions of type
-\tcode{Overflow}
+\tcode{Overflow}:
 \begin{codeblock}
 try {
     f(1.2);
@@ -248,7 +247,7 @@ try {
 \indextext{exception handling!handler}%
 \indextext{exception handling!nearest handler}%
 When an exception is thrown, control is transferred to the nearest handler with
-a matching type~(\ref{except.handle}); ``nearest'' means the handler
+a matching type\iref{except.handle}; ``nearest'' means the handler
 for which the
 \grammarterm{compound-statement} or
 \grammarterm{ctor-initializer}
@@ -258,16 +257,17 @@ keyword was most recently entered by the thread of control and not yet exited.
 
 \pnum
 Throwing an exception
-copy-initializes~(\ref{dcl.init}, \ref{class.copy}) a temporary object,
+copy-initializes~(\ref{dcl.init}, \ref{class.copy.ctor}) a temporary object,
 called the
-\indextext{exception handling!exception object}\term{exception object}.
+\defnx{exception object}{exception handling!exception object}.
 An lvalue denoting the temporary is used to initialize the
 variable declared in the matching
-\term{handler}~(\ref{except.handle}).
-If the type of the exception object would
-be an incomplete type or a pointer to an incomplete
-type other than (possibly cv-qualified)
-\tcode{void} the program is ill-formed.
+\grammarterm{handler}\iref{except.handle}.
+If the type of the exception object would be
+an incomplete type,
+an abstract class type\iref{class.abstract},
+or a pointer to an incomplete type other than \cv{}~\tcode{void}
+the program is ill-formed.
 
 \pnum
 \indextext{exception handling!memory}%
@@ -276,22 +276,37 @@ type other than (possibly cv-qualified)
 The memory for the exception object is
 allocated in an unspecified way, except as noted in~\ref{basic.stc.dynamic.allocation}.
 If a handler exits by rethrowing, control is passed to another handler for
-the same exception.
-The exception object is destroyed after either
-the last remaining active handler for the exception exits by
+the same exception object.
+The points of potential destruction for the exception object are:
+\begin{itemize}
+\item
+when an active handler for the exception exits by
 any means other than
-rethrowing, or the last object of type \tcode{std::exception_ptr}~(\ref{propagation})
-that refers to the exception object is destroyed, whichever is later. In the former
-case, the destruction occurs when the handler exits, immediately after the destruction
-of the object declared in the \grammarterm{exception-declaration} in the handler, if any.
-In the latter case, the destruction occurs before the destructor of \tcode{std::exception_ptr}
-returns.
+rethrowing,
+immediately after the destruction of the object (if any)
+declared in the \grammarterm{exception-declaration} in the handler;
+
+\item
+when an object of type \tcode{std::exception_ptr}\iref{propagation}
+that refers to the exception object is destroyed,
+before the destructor of \tcode{std::exception_ptr} returns.
+\end{itemize}
+
+Among all points of potential destruction for the exception object,
+there is an unspecified last one
+where the exception object is destroyed.
+All other points happen before that last one\iref{intro.races}.
+\begin{note}
+No other thread synchronization is implied in exception handling.
+\end{note}
 The implementation may then
 deallocate the memory for the exception object; any such deallocation
 is done in an unspecified way.
-\begin{note} a thrown exception does not
+\begin{note}
+A thrown exception does not
 propagate to other threads unless caught, stored, and rethrown using
-appropriate library functions; see~\ref{propagation} and~\ref{futures}. \end{note}
+appropriate library functions; see~\ref{propagation} and~\ref{futures}.
+\end{note}
 
 \pnum
 \indextext{exception handling!exception object!constructor}%
@@ -300,72 +315,69 @@ When the thrown object is a class object, the constructor selected for
 the copy-initialization as well as the constructor selected for
 a copy-initialization considering the thrown object as an lvalue
 shall be non-deleted and accessible, even if the copy/move operation is
-elided~(\ref{class.copy}).
-The destructor is potentially invoked~(\ref{class.dtor}).
+elided\iref{class.copy.elision}.
+The destructor is potentially invoked\iref{class.dtor}.
 
 \pnum
 \indextext{exception handling!rethrow}%
 \indextext{rethrow|see{exception handling, rethrow}}%
-\indextext{reraise|see{exception handling, rethrow}}%
 An exception is considered caught when a handler for that exception
-becomes active~(\ref{except.handle}).
+becomes active\iref{except.handle}.
 \begin{note}
 An exception can have active handlers and still be considered uncaught if
 it is rethrown.
 \end{note}
 
 \pnum
-\indextext{exception handling!terminate called@\tcode{terminate()} called}%
-\indextext{\idxcode{terminate()}!called}%
-If the exception handling mechanism, after completing the initialization of the
-exception object but before the activation of a handler for the exception,
-calls a function that exits via an
-exception, \tcode{std::terminate} is called~(\ref{except.terminate}). \begin{example}
-
+\indextext{exception handling!terminate called@\tcode{terminate} called}%
+\indextext{\idxcode{terminate}!called}%
+If the exception handling mechanism
+handling an uncaught exception\iref{except.uncaught}
+directly invokes a function that exits via an
+exception, the function \tcode{std::terminate} is called\iref{except.terminate}.
+\begin{example}
 \begin{codeblock}
 struct C {
   C() { }
   C(const C&) {
     if (std::uncaught_exceptions()) {
-      throw 0;      // throw during copy to handler's \grammarterm{exception-declaration} object~(\ref{except.handle})
+      throw 0;      // throw during copy to handler's \grammarterm{exception-declaration} object\iref{except.handle}
     }
   }
 };
 
 int main() {
   try {
-    throw C();      // calls \tcode{std::terminate()} if construction of the handler's
-                    // \grammarterm{exception-declaration} object is not elided~(\ref{class.copy})
+    throw C();      // calls \tcode{std::terminate} if construction of the handler's
+                    // \grammarterm{exception-declaration} object is not elided\iref{class.copy.elision}
   } catch(C) { }
 }
 \end{codeblock}
-
 \end{example}
+\begin{note}
+\setlength{\emergencystretch}{1em}
+Consequently, destructors should generally catch exceptions and not let them propa\-gate.
+\end{note}
 
 
 \rSec1[except.ctor]{Constructors and destructors}%
 \indextext{exception handling!constructors and destructors}%
-\indextext{constructor!exception~handling|see{exception handling, constructors and destructors}}%
-\indextext{destructor!exception~handling|see{exception handling, constructors and destructors}}
+\indextext{constructor!exception handling|see{exception handling, constructors and destructors}}%
+\indextext{destructor!exception handling|see{exception handling, constructors and destructors}}
 
 \pnum
 \indextext{unwinding!stack}%
 As control passes from the point where an exception is thrown
 to a handler,
-destructors are invoked by a process, specified in this section, called
-\defn{stack unwinding}. If a destructor directly invoked by stack unwinding
-exits with an exception, \tcode{std::terminate} is called~(\ref{except.terminate}).
-\begin{note}
-Consequently, destructors should generally catch exceptions and not let them
-propagate out of the destructor.
-\end{note}
+objects with automatic storage duration are destroyed by a process,
+specified in this subclause, called \defn{stack unwinding}.
 
 \pnum
-The destructor is invoked for each automatic object of class type constructed,
-but not yet destroyed,
+Each object with automatic storage duration is destroyed if it has been
+constructed, but not yet destroyed,
 since the try block was entered.
 If an exception is thrown during the destruction of temporaries or
-local variables for a \tcode{return} statement~(\ref{stmt.return}),
+local variables for a \tcode{return} statement\iref{stmt.return},
 the destructor for the returned object (if any) is also invoked.
 The objects are destroyed in the reverse order of the completion
 of their construction.
@@ -380,14 +392,14 @@ A f() {
     A a;
     Y y;
     A b;
-    return {};   // \#1
+    return {};      // \#1
   } catch (...) {
   }
-  return {};     // \#2
+  return {};        // \#2
 }
 \end{codeblock}
 At \#1, the returned object of type \tcode{A} is constructed.
-Then, the local variable \tcode{b} is destroyed~(\ref{stmt.jump}).
+Then, the local variable \tcode{b} is destroyed\iref{stmt.jump}.
 Next, the local variable \tcode{y} is destroyed,
 causing stack unwinding,
 resulting in the destruction of the returned object,
@@ -396,31 +408,40 @@ Finally, the returned object is constructed again at \#2.
 \end{example}
 
 \pnum
-For an object of class type
-of any storage duration whose initialization or destruction is terminated by an exception,
-the destructor is invoked for each of the object's fully constructed
-subobjects,
-that is, for each subobject for which the principal
-constructor~(\ref{class.base.init}) has completed execution
-and the destructor has not yet begun execution,
+If the initialization or destruction of an object
+other than by delegating constructor
+is terminated by an exception,
+the destructor is invoked for
+each of the object's direct subobjects
+and, for a complete object, virtual base class subobjects,
+whose initialization has completed\iref{dcl.init}
+and whose destructor has not yet begun execution,
 except that in the case of destruction, the variant members of a
 union-like class are not destroyed.
+\begin{note}
+If such an object has a reference member
+that extends the lifetime of a temporary object,
+this ends the lifetime of the reference member,
+so the lifetime of the temporary object is effectively not extended.
+\end{note}
 The subobjects are destroyed in the reverse order of the completion of
 their construction. Such destruction is sequenced before entering a
 handler of the \grammarterm{function-try-block} of the constructor or destructor,
 if any.
 
 \pnum
-Similarly, if the principal constructor for an object has
-completed execution and a delegating constructor for that object exits with
+If the \grammarterm{compound-statement}
+of the \grammarterm{function-body}
+of a delegating constructor
+for an object exits via
 an exception, the object's destructor is invoked.
 Such destruction is sequenced before entering a handler of the
 \grammarterm{function-try-block} of a delegating constructor for that object, if any.
 
 \pnum
 \begin{note}
-If the object was allocated by a \grammarterm{new-expression}~(\ref{expr.new}),
-the matching deallocation function~(\ref{basic.stc.dynamic.deallocation}),
+If the object was allocated by a \grammarterm{new-expression}\iref{expr.new},
+the matching deallocation function\iref{basic.stc.dynamic.deallocation},
 if any, is called to free the storage occupied by the object.
 \end{note}
 
@@ -432,10 +453,10 @@ if any, is called to free the storage occupied by the object.
 The
 \grammarterm{exception-declaration}
 in a
-\term{handler}
+\grammarterm{handler}
 describes the type(s) of exceptions that can cause
 that
-\term{handler}
+\grammarterm{handler}
 to be entered.
 \indextext{exception handling!handler!incomplete type in}%
 \indextext{exception handling!handler!rvalue reference in}%
@@ -460,9 +481,9 @@ or
 
 \pnum
 A handler of type
-\indextext{array!handler~of~type}%
+\indextext{array!handler of type}%
 ``array of \tcode{T}'' or
-\indextext{function!handler~of~type}%
+\indextext{function!handler of type}%
 function type \tcode{T}
 is adjusted to be of type
 ``pointer to \tcode{T}''.
@@ -470,7 +491,7 @@ is adjusted to be of type
 \pnum
 \indextext{exception handling!handler!match|(}%
 A
-\term{handler}
+\grammarterm{handler}
 is a match for
 an exception object
 of type
@@ -478,33 +499,33 @@ of type
 if
 \begin{itemize}
 \item%
-The \term{handler} is of type \textit{cv} \tcode{T} or
-\textit{cv} \tcode{T\&} and
+The \grammarterm{handler} is of type \cv{}~\tcode{T} or
+\cv{}~\tcode{T\&} and
 \tcode{E} and \tcode{T}
-are the same type (ignoring the top-level \grammarterm{cv-qualifiers}), or
+are the same type (ignoring the top-level \grammarterm{cv-qualifier}{s}), or
 \item%
-the \term{handler} is of type \textit{cv} \tcode{T} or
-\textit{cv} \tcode{T\&} and
+the \grammarterm{handler} is of type \cv{}~\tcode{T} or
+\cv{}~\tcode{T\&} and
 \tcode{T} is an unambiguous public base class of \tcode{E}, or
 \item%
-the \term{handler} is of type \textit{cv} \tcode{T} or \tcode{const T\&}
-where \tcode{T} is a pointer or pointer to member type and
-\tcode{E} is a pointer or pointer to member type
+the \grammarterm{handler} is of type \cv{}~\tcode{T} or \tcode{const T\&}
+where \tcode{T} is a pointer or pointer-to-member type and
+\tcode{E} is a pointer or pointer-to-member type
 that can be converted to \tcode{T} by one or more of
 \begin{itemize}
 
 \item%
-a standard pointer conversion~(\ref{conv.ptr}) not involving conversions
+a standard pointer conversion\iref{conv.ptr} not involving conversions
 to pointers to private or protected or ambiguous classes
 \item%
-a function pointer conversion~(\ref{conv.fctptr})
+a function pointer conversion\iref{conv.fctptr}
 \item%
-a qualification conversion~(\ref{conv.qual}), or
+a qualification conversion\iref{conv.qual}, or
 
 \end{itemize}
 
 \item
-the \term{handler} is of type \textit{cv} \tcode{T} or \tcode{const T\&} where \tcode{T} is a pointer or pointer to member type and \tcode{E} is \tcode{std::nullptr_t}.
+the \grammarterm{handler} is of type \cv{}~\tcode{T} or \tcode{const T\&} where \tcode{T} is a pointer or pointer-to-member type and \tcode{E} is \tcode{std::nullptr_t}.
 
 \end{itemize}
 
@@ -512,23 +533,25 @@ the \term{handler} is of type \textit{cv} \tcode{T} or \tcode{const T\&} where \
 A
 \grammarterm{throw-expression}
 whose operand is an integer literal with value zero does not match a handler of
-pointer or pointer to member type.
+pointer or pointer-to-member type.
+A handler of reference to array or function type
+is never a match for any exception object\iref{expr.throw}.
 \end{note}
 
 \begin{example}
 \begin{codeblock}
-class Matherr { /* ... */ virtual void vf(); };
-class Overflow: public Matherr { /* ... */ };
-class Underflow: public Matherr { /* ... */ };
-class Zerodivide: public Matherr { /* ... */ };
+class Matherr { @\commentellip@ virtual void vf(); };
+class Overflow: public Matherr { @\commentellip@ };
+class Underflow: public Matherr { @\commentellip@ };
+class Zerodivide: public Matherr { @\commentellip@ };
 
 void f() {
   try {
     g();
   } catch (Overflow oo) {
-        // ...
+    // ...
   } catch (Matherr mm) {
-        // ...
+    // ...
   }
 }
 \end{codeblock}
@@ -550,9 +573,11 @@ and
 
 \pnum
 The handlers for a try block are tried in order of appearance.
-That makes it possible to write handlers that can never be
-executed, for example by placing a handler for a derived class after
-a handler for a corresponding base class.
+\begin{note}
+This makes it possible to write handlers that can never be
+executed, for example by placing a handler for a final derived class after
+a handler for a corresponding unambiguous public base class.
+\end{note}
 
 \pnum
 A
@@ -574,34 +599,31 @@ handler continues in a dynamically surrounding try block
 of the same thread.
 
 \pnum
-A handler is considered active when initialization is complete for
-the parameter (if any) of the catch clause.
+A handler is considered \defnx{active}{exception handling!handler!active} when
+initialization is complete for the parameter (if any) of the catch clause.
 \begin{note}
 The stack will have been unwound at that point.
 \end{note}
 Also, an implicit handler is considered active when
-\tcode{std::terminate()}
-or
-\tcode{std::unexpected()}
+the function \tcode{std::terminate}
 is entered due to a throw. A handler is no longer considered active when the
-catch clause exits or when
-\tcode{std::unexpected()}
-exits after being entered due to a throw.
+catch clause exits.
 
 \pnum
+\indextext{currently handled exception|see{exception handling, currently handled exception}}%
 The exception with the most recently activated handler that is
 still active is called the
-\term{currently handled exception}.
+\defnx{currently handled exception}{exception handling!currently handled exception}.
 
 \pnum
 If no matching handler is found,
 the function
-\tcode{std::terminate()}
+\tcode{std::terminate}
 is called;
 whether or not the stack is unwound before this call to
-\tcode{std::terminate()}
+\tcode{std::terminate}
 is \impldef{stack unwinding before call to
-\tcode{std::terminate()}}~(\ref{except.terminate}).
+\tcode{std::terminate}}\iref{except.terminate}.
 
 \pnum
 Referring to any non-static member or base class of an object
@@ -619,12 +641,13 @@ Exceptions thrown in destructors of objects with static storage duration or in
 constructors of namespace-scope objects with static storage duration are not caught by a
 \grammarterm{function-try-block}
 on
-\tcode{main()}. Exceptions thrown in destructors of objects with thread storage duration or in constructors of namespace-scope objects with thread storage duration are not caught by a
+the \tcode{main} function\iref{basic.start.main}.
+Exceptions thrown in destructors of objects with thread storage duration or in constructors of namespace-scope objects with thread storage duration are not caught by a
 \grammarterm{function-try-block}
 on the initial function of the thread.
 
 \pnum
-If a return statement appears in a handler of the
+If a \tcode{return} statement\iref{stmt.return} appears in a handler of the
 \grammarterm{function-try-block}
 of a
 constructor, the program is ill-formed.
@@ -644,15 +667,14 @@ of that function (see \ref{stmt.return}).
 
 \pnum
 The variable declared by the \grammarterm{exception-declaration}, of type
-\cv{} \tcode{T} or \cv{} \tcode{T\&}, is initialized from the exception object,
+\cv{}~\tcode{T} or \cv{}~\tcode{T\&}, is initialized from the exception object,
 of type \tcode{E}, as follows:
-
 \begin{itemize}
 \item
 if \tcode{T} is a base class of \tcode{E}, the variable is
-copy-initialized~(\ref{dcl.init}) from the corresponding base class subobject
+copy-initialized\iref{dcl.init} from the corresponding base class subobject
 of the exception object;
-\item otherwise, the variable is copy-initialized~(\ref{dcl.init})
+\item otherwise, the variable is copy-initialized\iref{dcl.init}
 from the exception object.
 \end{itemize}
 
@@ -674,608 +696,373 @@ exception object and will have effect should that object be rethrown.%
 \indextext{exception specification|(}
 
 \pnum
+The predicate indicating whether a function cannot exit via an exception
+is called the \defn{exception specification} of the function.
+If the predicate is false,
+the function has a
+\indextext{exception specification!potentially-throwing}%
+\defnx{potentially-throwing exception specification}%
+{potentially-throwing!exception specification},
+otherwise it has a
 \indextext{exception specification!non-throwing}%
-The \defn{exception specification} of a function
-is a (possibly empty) set of types,
-indicating that the function might exit
-via an exception
-that matches a handler of one of the types in the set;
-the (conceptual) set of all types is used
-to denote that the function might exit
-via an exception
-of arbitrary type.
-If the set is empty,
-the function is said to have
-a \defn{non-throwing exception specification}.
-The exception specification
-is either defined explicitly
-by using an \grammarterm{exception-specification}
-as a suffix of a function declaration's declarator~(\ref{dcl.fct})
-or implicitly.
+\defn{non-throwing exception specification}.
+The exception specification is either defined implicitly,
+or defined explicitly
+by using a \grammarterm{noexcept-specifier}
+as a suffix of a function declarator\iref{dcl.fct}.
 
 \begin{bnf}
-\nontermdef{exception-specification}\br
-    dynamic-exception-specification\br
-    noexcept-specification
-\end{bnf}
-
-\begin{bnf}
-\nontermdef{dynamic-exception-specification}\br
-    \terminal{throw (} type-id-list\opt{} \terminal{)}
-\end{bnf}
-
-\begin{bnf}
-\nontermdef{type-id-list}\br
-    type-id \terminal{...}\opt\br
-    type-id-list \terminal{,} type-id \terminal{...}\opt
-\end{bnf}
-
-\begin{bnf}
-\nontermdef{noexcept-specification}\br
+\nontermdef{noexcept-specifier}\br
     \terminal{noexcept} \terminal{(} constant-expression \terminal{)}\br
-    \terminal{noexcept}
+    \terminal{noexcept}\br
 \end{bnf}
 
+\pnum
 \indextext{exception specification!noexcept!constant expression and}%
-In a \grammarterm{noexcept-specification}, the \grammarterm{constant-expression},
+In a \grammarterm{noexcept-specifier}, the \grammarterm{constant-expression},
 if supplied, shall be a contextually converted constant expression
-of type \tcode{bool}~(\ref{expr.const}).
+of type \tcode{bool}\iref{expr.const};
+that constant expression is the exception specification of
+the function type in which the \grammarterm{noexcept-specifier} appears.
 A \tcode{(} token that follows \tcode{noexcept} is part of the
-\grammarterm{noexcept-specification} and does not commence an
-initializer~(\ref{dcl.init}).
+\grammarterm{noexcept-specifier} and does not commence an
+initializer\iref{dcl.init}.
+The \grammarterm{noexcept-specifier} \tcode{noexcept}
+without a \grammarterm{constant-expression}
+is
+equivalent to the \grammarterm{noexcept-specifier}
+\tcode{noexcept(true)}.
 
 \pnum
-\indextext{exception specification!incomplete type and}%
-A type denoted
-in a \grammarterm{dynamic-exception-specification}
-shall not denote an incomplete type or an rvalue reference type.
-A type denoted
-in a \grammarterm{dynamic-exception-specification}
-shall not denote a pointer or reference to an incomplete type, other than
-``pointer to \cv\ \tcode{void}''.
-A type
-\cv\ \tcode{T}
-denoted in a \grammarterm{dynamic-exception-specification}
-is adjusted to type \tcode{T}.
-A type
-``array of \tcode{T}'', or
-function type \tcode{T}
-denoted in a \grammarterm{dynamic-exception-specification}
-is adjusted to type
-``pointer to \tcode{T}''.
-A \grammarterm{dynamic-exception-specification}
-denotes an exception specification
-that is the set of adjusted types specified thereby.
-
-\pnum
-The \grammarterm{exception-specification}
-\tcode{noexcept} or \tcode{noexcept(}\grammarterm{constant-expression}{}\tcode{)},
-where the \grammarterm{constant-expression} yields \tcode{true},
-denotes an exception specification
-that is the empty set.
-The \grammarterm{exception-specification}
-\tcode{noexcept(}\grammarterm{constant-expression}{}\tcode{)},
-where the \grammarterm{constant-expression} yields \tcode{false},
-or the absence of an \grammarterm{exception-specification}
-in a function declarator other than that
-for a destructor~(\ref{class.dtor})
-or a deallocation function~(\ref{basic.stc.dynamic.deallocation})
-denotes an exception specification
-that is the set of all types.
-
-\pnum
-\indextext{exception specification!compatible}%
-Two \grammarterm{exception-specification}{s} are
-\defnx{compatible}{compatible|see{exception specification, compatible}} if
-the sets of types they denote are the same.
-
-\pnum
-If any declaration of a function has an
-\grammarterm{exception-specification}
-that is not a \grammarterm{noexcept-specification} allowing all exceptions,
-all declarations, including the definition and any explicit specialization,
-of that function shall have a compatible
-\grammarterm{exception-specification}.
-If any declaration of a pointer to function, reference to function,
-or pointer to member function has an
-\grammarterm{exception-specification},
-all occurrences of that declaration shall have a compatible
-\grammarterm{exception-specification}.
-If a declaration of a function has an implicit
-exception specification,
-other declarations of the function shall not specify an
-\grammarterm{exception-specification}.
-In an explicit instantiation an
-\grammarterm{exception-specification}
-may be specified, but is not required.
-If an
-\grammarterm{exception-specification}
-is specified in an explicit instantiation directive, it shall
-be compatible with the \grammarterm{exception-specification}{s} of
-other declarations of that function.
+If a declaration of a function
+does not have a \grammarterm{noexcept-specifier},
+the declaration has a potentially throwing exception specification
+unless it is a destructor or a deallocation function
+or is defaulted on its first declaration,
+in which cases the exception specification
+is as specified below
+and no other declaration for that function
+shall have a \grammarterm{noexcept-specifier}.
+In an explicit instantiation\iref{temp.explicit}
+a \grammarterm{noexcept-specifier} may be specified,
+but is not required.
+If a \grammarterm{noexcept-specifier} is specified
+in an explicit instantiation directive,
+the exception specification shall be the same as
+the exception specification of all other declarations of that function.
 A diagnostic is required only if the
-\grammarterm{exception-specification}{s} are not compatible
+exception specifications are not the same
 within a single translation unit.
 
 \pnum
 \indextext{exception specification!virtual function and}%
-If a virtual function has an
-exception specification,
+If a virtual function has a
+non-throwing exception specification,
 all declarations, including the definition, of any function
 that overrides that virtual function in any derived class
-shall only allow exceptions that are allowed by the
-exception specification
-of the base class virtual function,
+shall have a non-throwing
+exception specification,
 unless the overriding function is defined as deleted.
 \begin{example}
 \begin{codeblock}
 struct B {
-  virtual void f() throw (int, double);
+  virtual void f() noexcept;
   virtual void g();
+  virtual void h() noexcept = delete;
 };
 
 struct D: B {
-  void f();                     // ill-formed
-  void g() throw (int);         // OK
+  void f();                     // error
+  void g() noexcept;            // OK
+  void h() = delete;            // OK
 };
 \end{codeblock}
 
 The declaration of
 \tcode{D::f}
-is ill-formed because it allows all exceptions, whereas
+is ill-formed because it
+has a potentially-throwing exception specification,
+whereas
 \tcode{B::f}
-allows only
-\tcode{int}
-and
-\tcode{double}.
+has a non-throwing exception specification.
 \end{example}
 
 \pnum
-An
-\grammarterm{exception-specification}
-can include the same type more than once
-and can include classes that are related by inheritance,
-even though doing so is redundant.
-\begin{note} An
-\grammarterm{exception-specification}
-can also include the class
-\tcode{std::bad_exception}~(\ref{bad.exception}).
-\end{note}
-
-\pnum
-\indextext{allowing an exception|see{exception specification, allowing an exception}}%
-A function is said to
-\defnx{allow an exception}{exception specification!allowing an exception}
-of type
-\tcode{E}
-if
-its exception specification
-contains a type
-\tcode{T}
-for which a handler of type
-\tcode{T}
-would be a match~(\ref{except.handle}) for an exception of type
-\tcode{E}.
-\indextext{allowing all exceptions|see{exception specification, allowing all exceptions}}%
-A function is said to \defnx{allow all exceptions}{exception specification!allowing all exceptions}
-if its exception specification
-is the set of all types.
-
-\pnum
-\indextext{exception handling!unexpected called@\tcode{unexpected()} called}%
-\indextext{\idxcode{unexpected()}!called}%
-Whenever an exception of type \tcode{E} is thrown
-and the search for a handler~(\ref{except.handle})
-encounters the outermost block of a function with an
-exception specification that does not allow \tcode{E}, then,
-
-\begin{itemize}
-\item if the function definition has a
-\grammarterm{dynamic-exception-specification}, the function
-\tcode{std::unexpected()} is called~(\ref{except.unexpected}),
-
-\indextext{exception handling!terminate called@\tcode{terminate()} called}%
-\indextext{\idxcode{terminate()}!called}%
-\item otherwise, the function \tcode{std::terminate()} is called~(\ref{except.terminate}).
-\end{itemize}
-
-\begin{example}
-\begin{codeblock}
-class X { };
-class Y { };
-class Z: public X { };
-class W { };
-
-void f() throw (X, Y) {
-  int n = 0;
-  if (n) throw X();             // OK
-  if (n) throw Z();             // also OK
-  throw W();                    // will call \tcode{std::unexpected()}
-}
-\end{codeblock}
-\end{example}
-
-\begin{note} A function can have multiple declarations with different non-throwing
-\grammarterm{exception-specification}{s}; for this purpose, the one on the
-function definition is used. \end{note}
-
-\pnum
-An implementation shall not reject an expression merely because when
-executed it throws or might
-throw an exception that the containing function does not allow.
-\begin{example}
-\begin{codeblock}
-extern void f() throw(X, Y);
-
-void g() throw(X) {
-  f();                          // OK
-}
-
-\end{codeblock}
-the call to
-\tcode{f}
-is well-formed even though when called,
-\tcode{f}
-might throw exception
-\tcode{Y}
-that
-\tcode{g}
-does not allow.
-\end{example}
-
-\pnum
+\indextext{exception handling!terminate called@\tcode{terminate} called}%
+\indextext{\idxcode{terminate}!called}%
+Whenever an exception is thrown
+and the search for a handler\iref{except.handle}
+encounters the outermost block of a function with a
+non-throwing exception specification,
+the function \tcode{std::terminate} is called\iref{except.terminate}.
 \begin{note}
-An
-exception specification
-is not considered part of a function's type;
-see~\ref{dcl.fct}.
+An implementation is not permitted to reject an expression merely because, when
+executed, it throws or might
+throw an exception from a function with a non-throwing exception specification.
 \end{note}
+\begin{example}
+\begin{codeblock}
+extern void f();                // potentially-throwing
+
+void g() noexcept {
+  f();                          // valid, even if \tcode{f} throws
+  throw 42;                     // valid, effectively a call to \tcode{std::terminate}
+}
+\end{codeblock}
+The call to
+\tcode{f}
+is well-formed even though, when called,
+\tcode{f}
+might throw an exception.
+\end{example}
 
 \pnum
-The \defn{set of potential exceptions} of a given context is
-a set of types that might be thrown as an exception;
-the (conceptual) set of all types is used to denote that an exception of
-arbitrary type might be thrown.
-A subexpression \tcode{e1} of an expression \tcode{e} is an
-\defn{immediate subexpression} if there is no subexpression \tcode{e2} of \tcode{e}
-such that \tcode{e1} is a subexpression of \tcode{e2}.
-
-\pnum
-The \defn{set of potential exceptions of an expression} \tcode{e} is empty
-if \tcode{e} is a core constant expression (\ref{expr.const}).
-Otherwise, it is the union of the sets of potential exceptions of
-the immediate subexpressions of \tcode{e},
-including default argument expressions used in a function call,
-combined with a set \placeholder{S} defined by the form of \tcode{e}, as follows:
-
+An expression \tcode{e} is
+\defnx{potentially-throwing}{potentially-throwing!expression} if
 \begin{itemize}
 \item
-If \tcode{e} is a function call (\ref{expr.call}):
-\begin{itemize}
+\tcode{e} is a function call\iref{expr.call}
+whose \grammarterm{postfix-expression}
+has a function type,
+or a pointer-to-function type,
+with a potentially-throwing exception specification,
+or
 \item
-If its \grammarterm{postfix-expression} is a (possibly parenthesized)
-\grammarterm{id-expression}~(\ref{expr.prim.id}), class member access
-(\ref{expr.ref}), or pointer-to-member operation~(\ref{expr.mptr.oper})
-whose \grammarterm{cast-expression} is an \grammarterm{id-expression},
-\placeholder{S} is the set of types in the exception specification
-of the entity selected by the
-contained \grammarterm{id-expression} (after overload resolution, if applicable).
-\item
-Otherwise, if the \grammarterm{postfix-expression} has type
-``\tcode{noexcept} function'' or
-``pointer to \tcode{noexcept} function'',
-\placeholder{S} is the empty set.
-\item
-Otherwise, \placeholder{S} is the set of all types.
-\end{itemize}
-
-\item
-If \tcode{e} implicitly invokes one or more functions
+\tcode{e} implicitly invokes a function
 (such as an overloaded operator,
 an allocation function in a \grammarterm{new-expression},
-or a destructor if \tcode{e} is a full-expression~(\ref{intro.execution})),
-\placeholder{S} is the union of:
-\begin{itemize}
+a constructor for a function argument,
+or a destructor if \tcode{e} is a full-expression\iref{intro.execution})
+that is potentially-throwing,
+or
 \item
-the sets of types in the exception specifications of all such functions, and
+\tcode{e} is a \grammarterm{throw-expression}\iref{expr.throw},
+or
 \item
-if \tcode{e} is a \grammarterm{new-expression}
-with a non-constant \grammarterm{expression}
-in the \grammarterm{noptr-new-declarator}~(\ref{expr.new})
-and the allocation function selected for \tcode{e}
-has a non-empty set of potential exceptions,
-the set containing \tcode{std::bad_array_new_length}.
+\tcode{e} is a \tcode{dynamic_cast} expression that casts to a reference type and
+requires a runtime check\iref{expr.dynamic.cast},
+or
+\item
+\tcode{e} is a \tcode{typeid} expression applied to a
+(possibly parenthesized) built-in unary \tcode{*} operator
+applied to a pointer to a
+polymorphic class type\iref{expr.typeid},
+or
+\item
+any of the immediate subexpressions\iref{intro.execution}
+of \tcode{e} is potentially-throwing.
 \end{itemize}
-\item
-If \tcode{e} initializes an object of type \tcode{D} using an inherited
-constructor for a class of type \tcode{B}~(\ref{class.inhctor.init}),
-\placeholder{S} also contains the sets of potential exceptions
-of the implied constructor invocations for subobjects of \tcode{D}
-that are not subobjects of \tcode{B} (including default argument expressions
-used in such invocations) as selected by overload resolution,
-and the sets of potential exceptions of
-the initialization of non-static data members from
-\grammarterm{brace-or-equal-initializers}~(\ref{class.base.init}).
-\item
-If \tcode{e} is a \grammarterm{throw-expression}~(\ref{expr.throw}),
-\placeholder{S} consists of the type of the exception object that would be
-initialized by the operand, if present, or is the set of all types otherwise.
-\item
-If \tcode{e} is a \tcode{dynamic_cast} expression that casts to a reference type and
-requires a run-time check~(\ref{expr.dynamic.cast}),
-\placeholder{S} consists of the type \tcode{std::bad_cast}.
-\item
-If \tcode{e} is a \tcode{typeid} expression applied to a glvalue expression whose
-type is a polymorphic class type (\ref{expr.typeid}),
-\placeholder{S} consists of the type \tcode{std::bad_typeid}.
-\end{itemize}
-
-\begin{example}
-Given the following declarations
-\begin{codeblock}
-  void f() throw(int); 
-  void g();  
-  struct A { A(); };
-  struct B { B() noexcept; };
-  struct D { D() throw (double); };
-\end{codeblock}
-the set of potential exceptions for some sample expressions is:
-\begin{itemize}
-\item
-for \tcode{f()}, the set consists of \tcode{int};
-\item
-for \tcode{g()}, the set is the set of all types;
-\item
-for \tcode{new A}, the set is the set of all types;
-\item
-for \tcode{B()}, the set is empty;
-\item
-for \tcode{new D}, the set is the set of all types.
-\end{itemize}
-\end{example}
 
 \pnum
-A function with an implied non-throwing exception specification,
-where the function's type is declared to be \tcode{T},
-is instead considered to be of type ``\tcode{noexcept} \tcode{T}''.
-
-\pnum
-An implicitly-declared special member function \tcode{f} of some class \tcode{X}
-is considered to have an implicit exception specification that
-consists of all the members from the following sets:
-
+An implicitly-declared constructor for a class \tcode{X},
+or a constructor without a \grammarterm{noexcept-specifier}
+that is defaulted on its first declaration,
+has a potentially-throwing exception specification
+if and only if
+any of the following constructs is potentially-throwing:
 \begin{itemize}
 \item
-if \tcode{f} is a constructor,
-\begin{itemize}
+a constructor selected by overload resolution
+in the implicit definition of the constructor
+for class \tcode{X}
+to initialize a potentially constructed subobject, or
 \item
-the sets of potential exceptions of the constructor invocations
-\begin{itemize}
+a subexpression of such an initialization,
+such as a default argument expression, or,
 \item
-for \tcode{X}'s non-variant non-static data members,
-\item
-for \tcode{X}'s direct base classes, and
-\item
-if \tcode{X} is non-abstract (\ref{class.abstract}), for \tcode{X}'s virtual base
-classes,
+for a default constructor, a default member initializer.
 \end{itemize}
-(including default argument expressions used in such invocations) as selected
-by overload resolution for the implicit definition of \tcode{f} (\ref{class.ctor}).
 \begin{note}
-Even though destructors for fully-constructed subobjects are invoked
-when an exception is thrown during the execution of a constructor (\ref{except.ctor}),
-their exception specifications do not contribute to the
-exception specification of the constructor, because
-an exception thrown from such a destructor could never escape the constructor
-(\ref{except.throw}, \ref{except.terminate}).
+Even though destructors for fully-constructed subobjects
+are invoked when an exception is thrown
+during the execution of a constructor\iref{except.ctor},
+their exception specifications do not contribute
+to the exception specification of the constructor,
+because an exception thrown from such a destructor
+would call the function \tcode{std::terminate}
+rather than escape the constructor~(\ref{except.throw}, \ref{except.terminate}).
 \end{note}
-\item
-the sets of potential exceptions of the initialization of non-static data members
-from \grammarterm{brace-or-equal-initializer}{s} that are not ignored (\ref{class.base.init});
-\end{itemize}
 
-\item
-if \tcode{f} is an assignment operator, the sets of potential exceptions of
-the assignment operator invocations for \tcode{X}'s non-variant non-static
-data members and for \tcode{X}'s direct base classes (including default
-argument expressions used in such invocations), as selected by overload resolution
-for the implicit definition of \tcode{f} (\ref{class.copy});
+\pnum
+The exception specification for an implicitly-declared destructor,
+or a destructor without a \grammarterm{noexcept-specifier},
+is potentially-throwing if and only if
+any of the destructors
+for any of its potentially constructed subobjects
+is potentially-throwing or
+the destructor is virtual and the destructor of any virtual base class
+is potentially-throwing.
 
-\item
-if \tcode{f} is a destructor, the sets of potential exceptions of the
-destructor invocations for \tcode{X}'s non-variant non-static data members
-and for \tcode{X}'s virtual and direct base classes.
-\end{itemize}
+\pnum
+The exception specification for an implicitly-declared assignment operator,
+or an assignment-operator without a \grammarterm{noexcept-specifier}
+that is defaulted on its first declaration,
+is potentially-throwing if and only if
+the invocation of any assignment operator
+in the implicit definition is potentially-throwing.
 
+\pnum
+A deallocation function\iref{basic.stc.dynamic.deallocation}
+with no explicit \grammarterm{noexcept-specifier}
+has a non-throwing exception specification.
+
+\pnum
+The exception specification for a comparison operator function\iref{over.binary}
+without a \grammarterm{noexcept-specifier}
+that is defaulted on its first declaration
+is potentially-throwing if and only if
+the invocation of any comparison operator
+in the implicit definition is potentially-throwing.
+
+\pnum
 \begin{example}
 \begin{codeblock}
 struct A {
   A(int = (A(5), 0)) noexcept;
-  A(const A&) throw();
-  A(A&&) throw();
-  ~A() throw(X);
+  A(const A&) noexcept;
+  A(A&&) noexcept;
+  ~A();
 };
 struct B {
-  B() throw();
-  B(const B&) = default; // exception specification contains no types
+  B() noexcept;
+  B(const B&) = default;        // implicit exception specification is \tcode{noexcept(true)}
   B(B&&, int = (throw Y(), 0)) noexcept;
-  ~B() throw(Y);
+  ~B() noexcept(false);
 };
 int n = 7;
 struct D : public A, public B {
-    int * p = new (std::nothrow) int[n];
-    // exception specification of \tcode{D::D()} contains \tcode{X}
-    // exception specification of \tcode{D::D(const D\&)} contains no types
-    // exception specification of \tcode{D::D(D\&\&)} contains \tcode{Y}
-    // exception specification of \tcode{D::\~D()} contains \tcode{X} and \tcode{Y}
-};
-struct exp : std::bad_alloc {};
-void *operator new[](size_t) throw(exp);
-struct E : public A {
-  int * p = new int[n];
-  // exception specification of \tcode{E::E()} contains \tcode{X}, \tcode{exp}, and \tcode{std::bad_array_new_length}
+    int * p = new int[n];
+    // \tcode{D::D()} potentially-throwing, as the \tcode{new} operator may throw \tcode{bad_alloc} or \tcode{bad_array_new_length}
+    // \tcode{D::D(const D\&)} non-throwing
+    // \tcode{D::D(D\&\&)} potentially-throwing, as the default argument for \tcode{B}'s constructor may throw
+    // \tcode{D::\~D()} potentially-throwing
 };
 \end{codeblock}
-
 Furthermore, if
 \tcode{A::\~{}A()}
-or
-\tcode{B::\~{}B()}
 were virtual,
-\tcode{D::\~{}D()}
-would not be as restrictive as that of
-\tcode{A::\~{}A},
-and the program would be ill-formed since a function that overrides a virtual
-function from a base class shall have an \grammarterm{exception-specification}
- at least as restrictive as that in the base class.
+the program would be ill-formed since a function that overrides a virtual
+function from a base class
+shall not have a potentially-throwing exception specification
+if the base class function has a non-throwing exception specification.
 \end{example}
 
 \pnum
-A deallocation function~(\ref{basic.stc.dynamic.deallocation})
-with no explicit \grammarterm{exception-specification}
-has an exception specification that is the empty set.
-
-\pnum
-An \grammarterm{exception-specification} is considered to be \term{needed} when:
-
+An exception specification is considered to be \defnx{needed}{needed!exception specification} when:
 \begin{itemize}
 \item in an expression, the function is the unique lookup result or the selected
 member of a set of overloaded functions~(\ref{basic.lookup}, \ref{over.match}, \ref{over.over});
 
-\item the function is odr-used~(\ref{basic.def.odr}) or, if it appears in an
+\item the function is odr-used\iref{basic.def.odr} or, if it appears in an
 unevaluated operand, would be odr-used if the expression were
 potentially-evaluated;
 
-\item the \grammarterm{exception-specification} is compared to that of another
+\item the exception specification is compared to that of another
 declaration (e.g., an explicit specialization or an overriding virtual
 function);
 
 \item the function is defined; or
 
-\item the \grammarterm{exception-specification} is needed for a defaulted
+\item the exception specification is needed for a defaulted
 special member function that calls the function.
-\begin{note} A defaulted declaration does not require the
-\grammarterm{exception-specification} of a base member function to be evaluated
-until the implicit \grammarterm{exception-specification} of the derived
-function is needed, but an explicit \grammarterm{exception-specification} needs
-the implicit \grammarterm{exception-specification} to compare against.
+\begin{note}
+A defaulted declaration does not require the
+exception specification of a base member function to be evaluated
+until the implicit exception specification of the derived
+function is needed, but an explicit \grammarterm{noexcept-specifier} needs
+the implicit exception specification to compare against.
 \end{note}
 \end{itemize}
-
-The \grammarterm{exception-specification} of a defaulted special member
+The exception specification of a defaulted special member
 function is evaluated as described above only when needed; similarly, the
-\grammarterm{exception-specification} of a specialization of a function
+\grammarterm{noexcept-specifier} of a specialization of a function
 template or member function of a class template is instantiated only when
 needed.
-
-
-
-\pnum
-In a \grammarterm{dynamic-exception-specification}, a
-\grammarterm{type-id} followed by an ellipsis is a
-pack expansion~(\ref{temp.variadic}).
-
-\pnum
-\begin{note} The use of \grammarterm{dynamic-exception-specification}{s} is deprecated
-(see Annex~\ref{depr}). \end{note}%
+%
 \indextext{exception specification|)}
 
 \rSec1[except.special]{Special functions}
 
 \pnum
-The functions \tcode{std::terminate()}~(\ref{except.terminate}) and
-\tcode{std::unexpected()}~(\ref{except.unexpected}) are used by the exception
+The function \tcode{std::terminate}\iref{except.terminate}
+is used by the exception
 handling mechanism for coping with errors related to the exception handling
 mechanism itself. The function
-\tcode{std::current_exception()}~(\ref{propagation}) and the class
-\tcode{std::nested_exception}~(\ref{except.nested}) can be used by a program to
+\tcode{std::current_exception()}\iref{propagation} and the class
+\tcode{std::nested_exception}\iref{except.nested} can be used by a program to
 capture the currently handled exception.
 
-\rSec2[except.terminate]{The \tcode{std::terminate()} function}
+\rSec2[except.terminate]{The \tcode{std::terminate} function}
 
 \pnum
-\indextext{\idxcode{terminate()}}%
+\indextext{\idxcode{terminate}}%
 In some situations exception handling must be abandoned
-for less subtle error handling techniques. \begin{note} These situations are:
-
-\indextext{\idxcode{terminate()}!called}%
+for less subtle error handling techniques.
+\begin{note}
+These situations are:
+\indextext{\idxcode{terminate}!called}%
 \begin{itemize}
 \item%
 when the exception handling mechanism, after completing
 the initialization of the exception object
 but before
-activation of a handler for the exception~(\ref{except.throw}),
+activation of a handler for the exception\iref{except.throw},
 calls a function that exits
 via an exception, or
 
 \item%
-when the exception handling mechanism cannot find a handler for a thrown exception~(\ref{except.handle}), or
+when the exception handling mechanism cannot find a handler for a thrown exception\iref{except.handle}, or
 
-\item when the search for a handler~(\ref{except.handle}) encounters the
-outermost block of a function with a \grammarterm{noexcept-specification}
-that does not allow the exception~(\ref{except.spec}), or
+\item when the search for a handler\iref{except.handle} encounters the
+outermost block of a function
+with a non-throwing exception specification\iref{except.spec}, or
 
 \item%
-when the destruction of an object during stack unwinding~(\ref{except.ctor})
+when the destruction of an object during stack unwinding\iref{except.ctor}
 terminates by throwing an exception, or
 
 \item%
 when initialization of a non-local
-variable with static or thread storage duration~(\ref{basic.start.dynamic})
+variable with static or thread storage duration\iref{basic.start.dynamic}
 exits via an exception, or
 
 \item%
 when destruction of an object with static or thread storage duration exits
-via an exception~(\ref{basic.start.term}), or
+via an exception\iref{basic.start.term}, or
 
 \item%
 when execution of a function registered with
 \tcode{std::atexit} or \tcode{std::at_quick_exit}
-exits via an exception~(\ref{support.start.term}), or
+exits via an exception\iref{support.start.term}, or
 
 \item%
 when a
-\grammarterm{throw-expression}~(\ref{expr.throw})
+\grammarterm{throw-expression}\iref{expr.throw}
 with no operand attempts to rethrow an exception and no exception is being
-handled~(\ref{except.throw}), or
-
-\item%
-when
-\tcode{std::unexpected}
-exits via an exception
-of a type
-that is not allowed by the previously violated
-exception specification,
-and
-\tcode{std::bad_exception}
-is not included in that
-exception specification~(\ref{except.unexpected}), or
-
-\item%
-when the implementation's default
-unexpected exception handler
-is called~(\ref{unexpected.handler}), or
+handled\iref{except.throw}, or
 
 \item%
 when the function \tcode{std::nested_exception::rethrow_nested} is called for an object
-that has captured no exception~(\ref{except.nested}), or
+that has captured no exception\iref{except.nested}, or
 
 \item%
 when execution of the initial function of a thread exits via
-an exception~(\ref{thread.thread.constr}), or
+an exception\iref{thread.thread.constr}, or
 
 \item%
-when execution of an element access function~(\ref{algorithms.parallel.defns})
-of a parallel algorithm exits via an exception~(\ref{algorithms.parallel.exceptions}), or
+for a parallel algorithm whose \tcode{ExecutionPolicy} specifies such
+behavior~(\ref{execpol.seq}, \ref{execpol.par}, \ref{execpol.parunseq}),
+when execution of an element access function\iref{algorithms.parallel.defns}
+of the parallel algorithm exits via an exception\iref{algorithms.parallel.exceptions}, or
 
 \item%
-when the destructor or the copy assignment operator is invoked on an object
+when the destructor or the move assignment operator is invoked on an object
 of type \tcode{std::thread} that refers to a joinable thread
-(\ref{thread.thread.destr},~\ref{thread.thread.assign}), or
+(\ref{thread.thread.destr}, \ref{thread.thread.assign}), or
 
 \item%
 when a call to a \tcode{wait()}, \tcode{wait_until()}, or \tcode{wait_for()}
-function on a condition variable~(\ref{thread.condition.condvar},~\ref{thread.condition.condvarany})
+function on a condition variable~(\ref{thread.condition.condvar}, \ref{thread.condition.condvarany})
 fails to meet a postcondition.
 
 \end{itemize}
@@ -1283,102 +1070,46 @@ fails to meet a postcondition.
 \end{note}
 
 \pnum
-\indextext{\idxcode{terminate()}}%
+\indextext{\idxcode{terminate}}%
 In such cases,
-\tcode{std::terminate()}
-is called~(\ref{exception.terminate}).
+the function \tcode{std::terminate}
+is called\iref{exception.terminate}.
 In the situation where no matching handler is found, it is
-\impldef{stack unwinding before call to \tcode{std::terminate()}} whether or not the
+\impldef{stack unwinding before call to \tcode{std::terminate}} whether or not the
 stack is unwound
 before
-\tcode{std::terminate()}
+\tcode{std::terminate}
 is called.
-In the situation where the search for a handler~(\ref{except.handle}) encounters the
-outermost block of a function with a \grammarterm{noexcept-specification}
-that does not allow the exception~(\ref{except.spec}), it is
-\impldef{whether stack is unwound before calling \tcode{std::terminate()}
+In the situation where the search for a handler\iref{except.handle} encounters the
+outermost block of a function
+with a non-throwing exception specification\iref{except.spec}, it is
+\impldef{whether stack is unwound before calling the function \tcode{std::terminate}
 when a \tcode{noexcept} specification
 is violated}
 whether the stack is unwound, unwound partially, or not unwound at all
-before \tcode{std::terminate()} is called.
+before the function \tcode{std::terminate} is called.
 In all other situations, the stack shall not be unwound before
-\tcode{std::terminate()}
+the function \tcode{std::terminate}
 is called.
 An implementation is not permitted to finish stack unwinding
 prematurely based on a determination that the unwind process
-will eventually cause a call to
-\tcode{std::terminate()}.
-
-\rSec2[except.unexpected]{The \tcode{std::unexpected()} function}
-
-\pnum
-\indextext{\idxcode{unexpected()}}%
-If a function with
-a \grammarterm{dynamic-exception-specification}
-exits via an exception
-of a type that is not allowed by its exception specification,
-the function
-\tcode{std::unexpected()}
-is called~(\ref{exception.unexpected}) immediately after completing
-the stack unwinding for the former function.
-
-\pnum
-\begin{note} By default, \tcode{std::unexpected()} calls \tcode{std::terminate()}, but a
-program can install its own handler function~(\ref{set.unexpected}). In either case, the
-constraints in the following paragraph apply. \end{note}
-
-\pnum
-The
-\tcode{std::unexpected()}
-function shall not return, but it can throw (or rethrow) an exception.
-If it throws a new exception which is allowed by the exception specification
-which previously was violated, then the search for another handler
-will continue at the call of the function whose exception specification was violated.
-If it exits via an exception of a type that the
-\grammarterm{dynamic-exception-specification}
-does not allow,
-then the following happens:
-\indextext{\idxcode{bad_exception}}%
-If the
-\grammarterm{dynamic-exception-specification}
-does not include the class
-\tcode{std::bad_exception}~(\ref{bad.exception})
-then the function
-\tcode{std::terminate()}
-is called, otherwise the thrown exception is replaced by an
-implementation-defined object of type
-\tcode{std::bad_exception}
-and the search for another handler will continue at the call of the function
-whose
-\grammarterm{dynamic-exception-specification}
-was violated.
-
-\pnum
-\begin{note}
-Thus,
-a \grammarterm{dynamic-exception-specification}
-guarantees that a function exits only via an exception of one of the listed types.
-If the
-\grammarterm{dynamic-exception-specification}
-includes the type
-\tcode{std::bad_exception}
-then any exception type not on the list may be replaced by
-\tcode{std\-::\-bad_ex\-cep\-tion}
-within the function
-\tcode{std::unexpected()}.
-\end{note}
+will eventually cause a call to the function
+\tcode{std::terminate}.
 
 \rSec2[except.uncaught]{The \tcode{std::uncaught_exceptions()} function}%
-\indexlibrary{\idxcode{uncaught_exceptions}}
+\indexlibraryglobal{uncaught_exceptions}
 
 \pnum
 An exception is considered uncaught
-after completing the initialization of the exception object~(\ref{except.throw})
-until completing the activation of a handler for the exception~(\ref{except.handle}).
-This includes stack unwinding.
-If the exception is rethrown~(\ref{expr.throw}),
+after completing the initialization of the exception object\iref{except.throw}
+until completing the activation of a handler for the exception\iref{except.handle}.
+\begin{note}
+As a consequence, an exception is considered uncaught
+during any stack unwinding resulting from it being thrown.
+\end{note}
+If an exception is rethrown~(\ref{expr.throw}, \ref{propagation}),
 it is considered uncaught from the point of rethrow
-until the rethrown exception is caught again.
-The function \tcode{std::uncaught_exceptions()}~(\ref{uncaught.exceptions})
+until the rethrown exception is caught.
+The function \tcode{std::uncaught_exceptions()}\iref{uncaught.exceptions}
 returns the number of uncaught exceptions in the current thread.%
 \indextext{exception handling|)}
